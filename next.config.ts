@@ -6,19 +6,13 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: '**',
-       
+        port: '',
         pathname: '**',
-       
+        search: '',
       },
     ],
   },
-
-  experimental: {
-    agentFeedback: true,
-  },
   cacheComponents: true,
-  partialPrefetching: true,
-  reactCompiler: true,
   turbopack: {
     rules: {
       "*.css": {

@@ -21,6 +21,7 @@ export interface MenuItem {
     };
     status: "pending" | "approved" | "rejected";
     isActive: boolean;
+    premium?: boolean;
 }
 
 interface FeaturedMenuProps {
@@ -88,6 +89,12 @@ const FeaturedMenu = ({ items }: FeaturedMenuProps) => {
                                     <span className="absolute left-4 top-4 rounded-full bg-white px-3 py-1.5 text-xs font-bold text-orange-600 shadow">
                                         {item.category}
                                     </span>
+
+                                    {item.premium ? (
+                                        <span className="absolute right-4 top-4 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-wide text-white shadow">
+                                            Premium
+                                        </span>
+                                    ) : null}
 
                                     <div className="absolute bottom-4 right-4 rounded-xl bg-orange-500 px-4 py-2 text-lg font-extrabold text-white shadow-lg">
                                         ৳{item.price}

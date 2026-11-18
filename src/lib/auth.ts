@@ -1,9 +1,10 @@
 import { betterAuth } from "better-auth";
-import { MongoClient } from "mongodb";
 import { mongodbAdapter } from "@better-auth/mongo-adapter";
 
-const client = new MongoClient("mongodb://localhost:27017/database");
-const db = client.db();
+import { mongoClient } from "@/lib/db";
+import { DEFAULT_USER_ROLE } from "@/lib/roles";
+
+const db = mongoClient.db();
 
 export const auth = betterAuth({
     emailAndPassword: {
@@ -16,6 +17,25 @@ export const auth = betterAuth({
         },
     },
     database: mongodbAdapter(db, {
-        client,
+        client: mongoClient,
     }),
+    user: {
+        additionalFields: {
+            role: {
+                type: "string",
+                required: false,
+                defaultValue: DEFAULT_USER_ROLE,
+                // Roles are assigned server-side only; never accepted from
+                // a sign-up/sign-in payload.
+                input: false,
+            },
+            blocked: {
+                type: "boolean",
+                required: false,
+                defaultValue: false,
+                // Only administrators can block accounts, through the server.
+                input: false,
+            },
+        },
+    },
 });

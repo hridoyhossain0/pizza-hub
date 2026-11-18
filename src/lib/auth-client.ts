@@ -1,7 +1,10 @@
-import { createAuthClient } from "better-auth/react"
-export const authClient = createAuthClient({
-    /** The base URL of the server (optional if you're using the same domain) */
-    baseURL: process.env.BETTER_AUTH_URL as string,
-})
+import { createAuthClient } from "better-auth/react";
 
-export const { signIn, signUp, useSession } = createAuthClient()
+/**
+ * Same-origin client: the auth API is served by this Next.js app, so no
+ * explicit base URL is needed (and an undefined server-only env var would
+ * otherwise be baked into the browser bundle).
+ */
+export const authClient = createAuthClient();
+
+export const { signIn, signUp, signOut, useSession } = authClient;
