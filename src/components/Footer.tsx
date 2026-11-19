@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
     Pizza,
@@ -19,13 +18,11 @@ import {
 
 
 
+const COPYRIGHT_YEAR = new Date().getFullYear();
+
 const Footer =  () => {
 
-     const [year, setYear] = useState(2026);
-
-    useEffect(() => {
-        setYear(new Date().getFullYear());
-    }, []);
+     const year = COPYRIGHT_YEAR;
 
    
     const quickLinks = [
