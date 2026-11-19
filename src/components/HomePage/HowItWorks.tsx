@@ -7,6 +7,7 @@ import {
     ArrowRight,
     CheckCircle2,
 } from "lucide-react";
+import { MotionReveal } from "@/components/HomePage/MotionReveal";
 
 const steps = [
     {
@@ -66,7 +67,11 @@ const HowItWorks = () => {
                         const Icon = step.icon;
 
                         return (
-                            <div key={step.id} className="relative text-center">
+                            <MotionReveal
+                                key={step.id}
+                                className="relative text-center"
+                                delay={index * 0.08}
+                            >
 
                                 {/* Connector */}
                                 {index !== steps.length - 1 && (
@@ -91,7 +96,7 @@ const HowItWorks = () => {
                                     {step.description}
                                 </p>
 
-                            </div>
+                            </MotionReveal>
                         );
                     })}
                 </div>

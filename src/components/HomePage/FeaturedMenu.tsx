@@ -7,6 +7,7 @@ import {
     Tag,
 } from "lucide-react";
 import Image from "next/image";
+import { MotionReveal } from "@/components/HomePage/MotionReveal";
 
 export interface MenuItem {
     _id: string;
@@ -71,11 +72,12 @@ const FeaturedMenu = ({ items }: FeaturedMenuProps) => {
                 {featuredItems.length > 0 ? (
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
 
-                        {featuredItems.map((item) => (
-                            <div
+                        {featuredItems.map((item, index) => (
+                            <MotionReveal
                                 key={item._id}
-                                className="group overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition duration-300 hover:-translate-y-2 hover:shadow-xl dark:border-white/10 dark:bg-neutral-900"
+                                delay={index * 0.06}
                             >
+                                <div className="group overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition duration-300 hover:-translate-y-2 hover:shadow-xl dark:border-white/10 dark:bg-neutral-900">
                                 {/* Image */}
                                 <div className="relative h-56 overflow-hidden bg-gray-100 dark:bg-neutral-800">
                                     <Image
@@ -150,7 +152,8 @@ const FeaturedMenu = ({ items }: FeaturedMenuProps) => {
                                         </Link>
                                     </div>
                                 </div>
-                            </div>
+                                </div>
+                            </MotionReveal>
                         ))}
 
                     </div>

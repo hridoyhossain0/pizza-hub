@@ -7,6 +7,7 @@ import {
     ChefHat,
     Headset,
 } from "lucide-react";
+import { MotionReveal } from "@/components/HomePage/MotionReveal";
 
 const benefits = [
     {
@@ -78,14 +79,12 @@ const WhyChooseUs = () => {
 
                 {/* Benefits Grid */}
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    {benefits.map((benefit) => {
+                    {benefits.map((benefit, index) => {
                         const Icon = benefit.icon;
 
                         return (
-                            <div
-                                key={benefit.id}
-                                className="group rounded-2xl border border-orange-100 bg-white p-7 shadow-sm transition duration-300 hover:-translate-y-2 hover:border-orange-300 hover:shadow-xl dark:border-white/10 dark:bg-neutral-900 dark:hover:border-orange-500/40"
-                            >
+                            <MotionReveal key={benefit.id} delay={index * 0.05}>
+                                <div className="group h-full rounded-2xl border border-orange-100 bg-white p-7 shadow-sm transition duration-300 hover:-translate-y-2 hover:border-orange-300 hover:shadow-xl dark:border-white/10 dark:bg-neutral-900 dark:hover:border-orange-500/40">
                                 {/* Icon */}
                                 <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-100 text-orange-600 transition duration-300 group-hover:bg-orange-500 group-hover:text-white dark:bg-orange-500/15 dark:text-orange-400 dark:group-hover:bg-orange-500 dark:group-hover:text-white">
                                     <Icon size={27} />
@@ -99,7 +98,8 @@ const WhyChooseUs = () => {
                                 <p className="mt-3 text-sm leading-7 text-gray-500 dark:text-gray-400">
                                     {benefit.description}
                                 </p>
-                            </div>
+                                </div>
+                            </MotionReveal>
                         );
                     })}
                 </div>

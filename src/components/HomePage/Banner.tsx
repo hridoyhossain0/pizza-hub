@@ -1,6 +1,7 @@
 
 import Link from "next/link";
 import { ArrowRight, Flame } from "lucide-react";
+import { MotionReveal } from "@/components/HomePage/MotionReveal";
 
 const Banner = () => {
     return (
@@ -19,7 +20,7 @@ const Banner = () => {
 
             {/* Content */}
             <div className="relative z-10 mx-auto flex min-h-[500px] max-w-7xl items-center px-5 py-20 md:min-h-[600px] md:px-10 lg:px-16">
-                <div className="max-w-2xl">
+                <MotionReveal className="max-w-2xl">
                     {/* Small Badge */}
                     <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-orange-500/40 bg-orange-500/10 px-4 py-2 text-sm font-medium text-orange-400">
                         <Flame size={17} />
@@ -58,7 +59,8 @@ const Banner = () => {
                             Made with love ❤️
                         </span>
                     </div>
-                </div>
+                </MotionReveal>
+               
             </div>
 
             {/* Bottom Decoration */}

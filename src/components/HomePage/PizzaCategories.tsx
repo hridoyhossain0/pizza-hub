@@ -9,6 +9,7 @@ import {
     Utensils,
     Coffee,
 } from "lucide-react";
+import { MotionReveal } from "@/components/HomePage/MotionReveal";
 
 const categories = [
     {
@@ -98,15 +99,15 @@ const PizzaCategories = () => {
                 {/* Categories Grid */}
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
 
-                    {categories.map((category) => {
+                    {categories.map((category, index) => {
                         const Icon = category.icon;
 
                         return (
-                            <Link
-                                key={category.id}
-                                href={`/menu?category=${category.slug}`}
-                                className="group relative h-64 overflow-hidden rounded-2xl bg-gray-900 shadow-md transition duration-300 hover:-translate-y-2 hover:shadow-xl sm:h-72"
-                            >
+                            <MotionReveal key={category.id} delay={index * 0.05}>
+                                <Link
+                                    href={`/menu?category=${category.slug}`}
+                                    className="group relative block h-64 overflow-hidden rounded-2xl bg-gray-900 shadow-md transition duration-300 hover:-translate-y-2 hover:shadow-xl sm:h-72"
+                                >
                                 {/* Background Image */}
                                 <img
                                     src={category.image}
@@ -144,7 +145,8 @@ const PizzaCategories = () => {
                                         />
                                     </div>
                                 </div>
-                            </Link>
+                                </Link>
+                            </MotionReveal>
                         );
                     })}
 
