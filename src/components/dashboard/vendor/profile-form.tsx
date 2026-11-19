@@ -6,6 +6,7 @@ import { ImagePlus, Upload } from "lucide-react";
 import { FormMessage } from "@/components/dashboard/form-message";
 import { SubmitButton } from "@/components/dashboard/submit-button";
 import { saveVendorProfile } from "@/lib/actions/vendor";
+import { useActionToast } from "@/hooks/use-action-toast";
 import {
     EMPTY_ACTION,
     type VendorProfileView,
@@ -20,6 +21,10 @@ export function VendorProfileForm({
         saveVendorProfile,
         EMPTY_ACTION
     );
+    useActionToast(state, {
+        successTitle: "Restaurant profile saved",
+        errorTitle: "Could not save restaurant profile",
+    });
     const [preview, setPreview] = useState(profile?.image ?? "");
 
     return (

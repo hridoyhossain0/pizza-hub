@@ -9,6 +9,7 @@ import {
     deleteMenuItem,
     setMenuItemAvailability,
 } from "@/lib/actions/menu";
+import { notifyResult } from "@/lib/toast";
 import type { ActionResult } from "@/lib/types/dashboard";
 
 export function MenuRowActions({
@@ -27,6 +28,10 @@ export function MenuRowActions({
         startTransition(async () => {
             const response = await action();
             setResult(response);
+            notifyResult(response, {
+                successTitle: "Menu item updated",
+                errorTitle: "Could not update menu item",
+            });
             if (response.ok) {
                 router.refresh();
             }

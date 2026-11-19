@@ -2,13 +2,11 @@
 
 import { useState, useTransition } from "react";
 import { Crown, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { apiFetch } from "@/lib/api-client";
 import type { ActionResult } from "@/lib/types/dashboard";
-
-const API_URL = (
-    process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:7000"
-).replace(/\/$/, "");
 
 export function UpgradeButton() {
     const [pending, startTransition] = useTransition();
@@ -24,39 +22,37 @@ export function UpgradeButton() {
                     setResult(null);
                     startTransition(async () => {
                         try {
-                            const response = await fetch(
-                                `${API_URL}/api/payments/checkout`,
-                                {
-                                    method: "POST",
-                                    headers: {
-                                        "Content-Type": "application/json",
-                                    },
-                                    credentials: "include",
-                                    body: JSON.stringify({}),
-                                }
-                            );
-
-                            const data = (await response.json().catch(() => ({}))) as {
+                            const { response, data } = await apiFetch<{
                                 url?: string;
                                 message?: string;
-                            };
+                            }>("/api/payments/checkout", {
+                                method: "POST",
+                                body: JSON.stringify({}),
+                            });
 
-                            if (!response.ok || !data.url) {
-                                setResult({
-                                    ok: false,
-                                    message:
-                                        data.message ||
-                                        "Unable to start Stripe Checkout. Please try again.",
+                            if (!response.ok || !data?.url) {
+                                const message =
+                                    data?.message ||
+                                    "Unable to start Stripe Checkout. Please try again.";
+
+                                setResult({ ok: false, message });
+                                toast.error("Checkout not started", {
+                                    description: message,
                                 });
                                 return;
                             }
 
+                            toast.loading("Redirecting to Stripe...", {
+                                id: "stripe-checkout",
+                            });
                             window.location.assign(data.url);
                         } catch {
-                            setResult({
-                                ok: false,
-                                message:
-                                    "Unable to reach the payment service. Please try again.",
+                            const message =
+                                "Unable to reach the payment service. Please try again.";
+
+                            setResult({ ok: false, message });
+                            toast.error("Payment service unreachable", {
+                                description: message,
                             });
                         }
                     });

@@ -6,6 +6,7 @@ import { Loader2, XCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cancelOrder } from "@/lib/actions/orders";
+import { notifyResult } from "@/lib/toast";
 import type { ActionResult } from "@/lib/types/dashboard";
 
 export function CancelOrderButton({ orderId }: { orderId: string }) {
@@ -33,6 +34,10 @@ export function CancelOrderButton({ orderId }: { orderId: string }) {
                     startTransition(async () => {
                         const response = await cancelOrder(orderId);
                         setResult(response);
+                        notifyResult(response, {
+                            successTitle: "Order cancelled",
+                            errorTitle: "Could not cancel order",
+                        });
                         if (response.ok) {
                             router.refresh();
                         }

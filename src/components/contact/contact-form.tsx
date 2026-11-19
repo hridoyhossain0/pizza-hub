@@ -2,6 +2,7 @@
 
 import { useRef, useState, type FormEvent } from "react";
 import { CheckCircle2, Send } from "lucide-react";
+import { toast } from "sonner";
 
 const TOPICS = [
     "General question",
@@ -36,17 +37,24 @@ export function ContactForm() {
         const message = String(data.get("message") ?? "").trim();
 
         if (name.length < 2) {
-            setError("Please enter your name (at least 2 characters).");
+            const notice = "Please enter your name (at least 2 characters).";
+            setError(notice);
+            toast.error("Message not ready", { description: notice });
             return;
         }
 
         if (!EMAIL_PATTERN.test(email)) {
-            setError("Please enter a valid email address.");
+            const notice = "Please enter a valid email address.";
+            setError(notice);
+            toast.error("Message not ready", { description: notice });
             return;
         }
 
         if (message.length < 10) {
-            setError("Please add a few more details (at least 10 characters).");
+            const notice =
+                "Please add a few more details (at least 10 characters).";
+            setError(notice);
+            toast.error("Message not ready", { description: notice });
             return;
         }
 
@@ -59,6 +67,10 @@ export function ContactForm() {
 
         window.location.href = `mailto:hello@pizzahub.com?subject=${subject}&body=${body}`;
         setSent(true);
+        toast.success("Email draft ready", {
+            description:
+                "We opened your mail app with the message pre-filled.",
+        });
     };
 
     if (sent) {

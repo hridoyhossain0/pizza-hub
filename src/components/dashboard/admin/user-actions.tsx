@@ -6,6 +6,7 @@ import { Loader2, ShieldBan, ShieldCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { setUserBlocked } from "@/lib/actions/admin";
+import { notifyResult } from "@/lib/toast";
 import type { ActionResult } from "@/lib/types/dashboard";
 
 export function AdminUserActions({
@@ -56,6 +57,10 @@ export function AdminUserActions({
                             !blocked
                         );
                         setResult(response);
+                        notifyResult(response, {
+                            successTitle: "User updated",
+                            errorTitle: "Could not update user",
+                        });
                         if (response.ok) {
                             router.refresh();
                         }

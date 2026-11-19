@@ -12,6 +12,7 @@ import {
     createMenuItem,
     updateMenuItem,
 } from "@/lib/actions/menu";
+import { useActionToast } from "@/hooks/use-action-toast";
 import {
     EMPTY_ACTION,
     MENU_CATEGORIES,
@@ -41,6 +42,10 @@ export function MenuItemForm({ mode, item }: MenuFormProps) {
         mode === "create" ? createMenuItem : updateMenuItem,
         EMPTY_ACTION
     );
+    useActionToast(state, {
+        successTitle: mode === "create" ? "Menu item created" : "Menu item saved",
+        errorTitle: "Could not save menu item",
+    });
 
     const categories = item?.category
         ? [...new Set([...MENU_CATEGORIES, item.category])]

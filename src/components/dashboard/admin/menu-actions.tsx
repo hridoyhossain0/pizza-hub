@@ -9,6 +9,7 @@ import {
     adminDeleteMenuItem,
     setMenuItemStatus,
 } from "@/lib/actions/admin";
+import { notifyResult } from "@/lib/toast";
 import type {
     ActionResult,
     MenuStatus,
@@ -32,6 +33,10 @@ export function AdminMenuActions({
         startTransition(async () => {
             const response = await action();
             setResult(response);
+            notifyResult(response, {
+                successTitle: "Menu item updated",
+                errorTitle: "Could not update menu item",
+            });
             if (response.ok) {
                 router.refresh();
             }

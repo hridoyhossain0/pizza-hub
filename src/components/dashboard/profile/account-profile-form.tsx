@@ -6,6 +6,7 @@ import { ImagePlus, Upload, UserRound } from "lucide-react";
 import { FormMessage } from "@/components/dashboard/form-message";
 import { SubmitButton } from "@/components/dashboard/submit-button";
 import { saveAccountProfile } from "@/lib/actions/profile";
+import { useActionToast } from "@/hooks/use-action-toast";
 import { EMPTY_ACTION } from "@/lib/types/dashboard";
 
 interface AccountProfileFormProps {
@@ -21,6 +22,10 @@ export function AccountProfileForm({ user }: AccountProfileFormProps) {
         saveAccountProfile,
         EMPTY_ACTION
     );
+    useActionToast(state, {
+        successTitle: "Profile saved",
+        errorTitle: "Could not save profile",
+    });
     const [preview, setPreview] = useState(user.image ?? "");
     const [removeImage, setRemoveImage] = useState(false);
 

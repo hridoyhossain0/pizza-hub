@@ -6,6 +6,7 @@ import { Loader2, XCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cancelPremium } from "@/lib/actions/vendor";
+import { notifyResult } from "@/lib/toast";
 import type { ActionResult } from "@/lib/types/dashboard";
 
 export function CancelPremiumButton() {
@@ -33,6 +34,10 @@ export function CancelPremiumButton() {
                     startTransition(async () => {
                         const response = await cancelPremium();
                         setResult(response);
+                        notifyResult(response, {
+                            successTitle: "Subscription cancelled",
+                            errorTitle: "Could not cancel subscription",
+                        });
 
                         if (response.ok) {
                             router.refresh();

@@ -6,6 +6,7 @@ import { Check, Loader2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { decideOrder } from "@/lib/actions/orders";
+import { notifyResult } from "@/lib/toast";
 import type { ActionResult } from "@/lib/types/dashboard";
 
 export function VendorOrderActions({
@@ -42,6 +43,10 @@ export function VendorOrderActions({
         startTransition(async () => {
             const response = await decideOrder(orderId, decision);
             setResult(response);
+            notifyResult(response, {
+                successTitle: "Order updated",
+                errorTitle: "Could not update order",
+            });
             if (response.ok) {
                 router.refresh();
             }
