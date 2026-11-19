@@ -6,13 +6,13 @@ const STYLES: Record<string, string> = {
     approved: "border-emerald-200 bg-emerald-50 text-emerald-700",
     rejected: "border-red-200 bg-red-50 text-red-700",
     accepted: "border-emerald-200 bg-emerald-50 text-emerald-700",
-    cancelled: "border-gray-200 bg-gray-50 text-gray-600",
+    cancelled: "border-gray-200 bg-gray-50 text-gray-600 dark:border-white/15 dark:bg-white/5 dark:text-gray-300",
     paid: "border-emerald-200 bg-emerald-50 text-emerald-700",
     failed: "border-red-200 bg-red-50 text-red-700",
-    free: "border-gray-200 bg-gray-50 text-gray-700",
+    free: "border-gray-200 bg-gray-50 text-gray-700 dark:border-white/15 dark:bg-white/5 dark:text-gray-300",
     premium: "border-orange-200 bg-orange-50 text-orange-700",
     active: "border-emerald-200 bg-emerald-50 text-emerald-700",
-    inactive: "border-gray-200 bg-gray-50 text-gray-600",
+    inactive: "border-gray-200 bg-gray-50 text-gray-600 dark:border-white/15 dark:bg-white/5 dark:text-gray-300",
     blocked: "border-red-200 bg-red-50 text-red-700",
 };
 

@@ -6,7 +6,7 @@ import { getPublicMenuItems } from "@/lib/data";
 export const instant = false;
 
 export const metadata: Metadata = {
-    title: "Browse Menu | PizzaHub",
+    title: "Browse Menu",
     description:
         "Explore approved dishes from trusted PizzaHub restaurants. Search by name, category or location.",
 };

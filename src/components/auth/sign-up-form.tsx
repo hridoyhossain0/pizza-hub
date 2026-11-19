@@ -126,7 +126,7 @@ export default function SignUpForm() {
 
     return (
         <div className="min-h-screen bg-[#fffaf5] px-4 py-10 sm:px-6 lg:py-14">
-            <div className="mx-auto grid max-w-5xl overflow-hidden rounded-3xl border border-orange-100 bg-white shadow-xl shadow-orange-100/50 lg:grid-cols-2">
+            <div className="mx-auto grid max-w-5xl overflow-hidden rounded-3xl border border-orange-100 bg-white shadow-xl shadow-orange-100/50 dark:border-white/10 dark:bg-neutral-900 dark:shadow-black/40 lg:grid-cols-2">
                 <div className="relative hidden flex-col justify-between overflow-hidden bg-[#171717] p-10 text-white lg:flex">
                     <div className="absolute -right-24 -top-24 size-80 rounded-full bg-orange-500/20 blur-3xl" />
                     <div className="absolute -bottom-24 -left-24 size-80 rounded-full bg-orange-600/20 blur-3xl" />
@@ -257,7 +257,7 @@ export default function SignUpForm() {
                                                 "rounded-xl border-2 p-3 text-left transition",
                                                 selected
                                                     ? "border-orange-500 bg-orange-50"
-                                                    : "border-gray-200 hover:border-orange-200"
+                                                    : "border-gray-200 hover:border-orange-200 dark:border-white/15 dark:hover:border-orange-500/40"
                                             )}
                                         >
                                             <div className="flex items-center justify-between">
@@ -306,7 +306,7 @@ export default function SignUpForm() {
                                         setName(event.target.value)
                                     }
                                     placeholder="Enter your full name"
-                                    className="h-11 w-full rounded-xl border bg-gray-50 pl-10 pr-3 text-sm outline-none transition focus:border-orange-400 focus:bg-white focus:ring-4 focus:ring-orange-100"
+                                    className="h-11 w-full rounded-xl border bg-gray-50 pl-10 pr-3 text-sm outline-none transition focus:border-orange-400 focus:bg-white focus:ring-4 focus:ring-orange-100 dark:border-white/10 dark:bg-neutral-950 dark:text-gray-100 dark:placeholder:text-gray-500 dark:focus:bg-neutral-950 dark:focus:ring-orange-500/20"
                                 />
                             </div>
                         </div>
@@ -330,7 +330,7 @@ export default function SignUpForm() {
                                         setEmail(event.target.value)
                                     }
                                     placeholder="you@example.com"
-                                    className="h-11 w-full rounded-xl border bg-gray-50 pl-10 pr-3 text-sm outline-none transition focus:border-orange-400 focus:bg-white focus:ring-4 focus:ring-orange-100"
+                                    className="h-11 w-full rounded-xl border bg-gray-50 pl-10 pr-3 text-sm outline-none transition focus:border-orange-400 focus:bg-white focus:ring-4 focus:ring-orange-100 dark:border-white/10 dark:bg-neutral-950 dark:text-gray-100 dark:placeholder:text-gray-500 dark:focus:bg-neutral-950 dark:focus:ring-orange-500/20"
                                 />
                             </div>
                         </div>
@@ -357,7 +357,7 @@ export default function SignUpForm() {
                                             setPassword(event.target.value)
                                         }
                                         placeholder="Create password"
-                                        className="h-11 w-full rounded-xl border bg-gray-50 pl-10 pr-9 text-sm outline-none transition focus:border-orange-400 focus:bg-white focus:ring-4 focus:ring-orange-100"
+                                        className="h-11 w-full rounded-xl border bg-gray-50 pl-10 pr-9 text-sm outline-none transition focus:border-orange-400 focus:bg-white focus:ring-4 focus:ring-orange-100 dark:border-white/10 dark:bg-neutral-950 dark:text-gray-100 dark:placeholder:text-gray-500 dark:focus:bg-neutral-950 dark:focus:ring-orange-500/20"
                                     />
                                     <button
                                         type="button"
@@ -399,7 +399,7 @@ export default function SignUpForm() {
                                         setConfirmPassword(event.target.value)
                                     }
                                     placeholder="Repeat password"
-                                    className="h-11 w-full rounded-xl border bg-gray-50 px-3 text-sm outline-none transition focus:border-orange-400 focus:bg-white focus:ring-4 focus:ring-orange-100"
+                                    className="h-11 w-full rounded-xl border bg-gray-50 px-3 text-sm outline-none transition focus:border-orange-400 focus:bg-white focus:ring-4 focus:ring-orange-100 dark:border-white/10 dark:bg-neutral-950 dark:text-gray-100 dark:placeholder:text-gray-500 dark:focus:bg-neutral-950 dark:focus:ring-orange-500/20"
                                 />
                             </div>
                         </div>

@@ -75,21 +75,21 @@ const categories = [
 
 const PizzaCategories = () => {
     return (
-        <section className="bg-white px-4 py-16 sm:px-6 md:py-20 lg:px-8">
+        <section className="bg-white px-4 py-16 sm:px-6 md:py-20 lg:px-8 dark:bg-neutral-950">
             <div className="mx-auto max-w-7xl">
 
                 {/* Section Heading */}
                 <div className="mb-10 text-center">
-                    <span className="inline-block rounded-full bg-orange-100 px-4 py-2 text-sm font-semibold text-orange-600">
+                    <span className="inline-block rounded-full bg-orange-100 px-4 py-2 text-sm font-semibold text-orange-600 dark:bg-orange-500/15 dark:text-orange-400">
                         Explore Our Menu
                     </span>
 
-                    <h2 className="mt-4 text-3xl font-extrabold text-gray-900 sm:text-4xl md:text-5xl">
+                    <h2 className="mt-4 text-3xl font-extrabold text-gray-900 sm:text-4xl md:text-5xl dark:text-white">
                         Browse By{" "}
                         <span className="text-orange-500">Categories</span>
                     </h2>
 
-                    <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-gray-500 sm:text-base">
+                    <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-gray-500 sm:text-base dark:text-gray-400">
                         From classic favorites to gourmet creations, discover
                         the perfect flavor for every craving.
                     </p>

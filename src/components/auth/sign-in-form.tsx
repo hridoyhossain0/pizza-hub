@@ -98,7 +98,7 @@ export default function SignInForm({
 
     return (
         <div className="min-h-screen bg-[#fffaf5] px-4 py-10 sm:px-6 lg:py-14">
-            <div className="mx-auto grid max-w-5xl overflow-hidden rounded-3xl border border-orange-100 bg-white shadow-xl shadow-orange-100/50 lg:grid-cols-2">
+            <div className="mx-auto grid max-w-5xl overflow-hidden rounded-3xl border border-orange-100 bg-white shadow-xl shadow-orange-100/50 dark:border-white/10 dark:bg-neutral-900 dark:shadow-black/40 lg:grid-cols-2">
                 <div className="relative hidden flex-col justify-between overflow-hidden bg-[#171717] p-10 text-white lg:flex">
                     <div className="absolute -right-24 -top-24 size-80 rounded-full bg-orange-500/20 blur-3xl" />
                     <div className="absolute -bottom-24 -left-24 size-80 rounded-full bg-orange-600/20 blur-3xl" />
@@ -219,7 +219,7 @@ export default function SignInForm({
                                         setEmail(event.target.value)
                                     }
                                     placeholder="you@example.com"
-                                    className="h-11 w-full rounded-xl border bg-gray-50 pl-10 pr-3 text-sm outline-none transition focus:border-orange-400 focus:bg-white focus:ring-4 focus:ring-orange-100"
+                                    className="h-11 w-full rounded-xl border bg-gray-50 pl-10 pr-3 text-sm outline-none transition focus:border-orange-400 focus:bg-white focus:ring-4 focus:ring-orange-100 dark:border-white/10 dark:bg-neutral-950 dark:text-gray-100 dark:placeholder:text-gray-500 dark:focus:bg-neutral-950 dark:focus:ring-orange-500/20"
                                 />
                             </div>
                         </div>
@@ -251,7 +251,7 @@ export default function SignInForm({
                                         setPassword(event.target.value)
                                     }
                                     placeholder="Enter your password"
-                                    className="h-11 w-full rounded-xl border bg-gray-50 pl-10 pr-10 text-sm outline-none transition focus:border-orange-400 focus:bg-white focus:ring-4 focus:ring-orange-100"
+                                    className="h-11 w-full rounded-xl border bg-gray-50 pl-10 pr-10 text-sm outline-none transition focus:border-orange-400 focus:bg-white focus:ring-4 focus:ring-orange-100 dark:border-white/10 dark:bg-neutral-950 dark:text-gray-100 dark:placeholder:text-gray-500 dark:focus:bg-neutral-950 dark:focus:ring-orange-500/20"
                                 />
                                 <button
                                     type="button"

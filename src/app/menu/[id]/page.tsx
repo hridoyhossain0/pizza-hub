@@ -16,11 +16,11 @@ export async function generateMetadata({
     const item = await getPublicMenuItem(id);
 
     if (!item) {
-        return { title: "Menu item not found | PizzaHub" };
+        return { title: "Menu item not found" };
     }
 
     return {
-        title: `${item.name} | PizzaHub`,
+        title: item.name,
         description: item.description.slice(0, 160),
     };
 }

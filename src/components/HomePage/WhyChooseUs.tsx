@@ -55,21 +55,21 @@ const benefits = [
 
 const WhyChooseUs = () => {
     return (
-        <section className="bg-[#fffaf5] px-4 py-16 sm:px-6 md:py-20 lg:px-8">
+        <section className="bg-[#fffaf5] px-4 py-16 sm:px-6 md:py-20 lg:px-8 dark:bg-neutral-950">
             <div className="mx-auto max-w-7xl">
 
                 {/* Heading */}
                 <div className="mx-auto mb-12 max-w-2xl text-center">
-                    <span className="inline-block rounded-full bg-orange-100 px-4 py-2 text-sm font-semibold text-orange-600">
+                    <span className="inline-block rounded-full bg-orange-100 px-4 py-2 text-sm font-semibold text-orange-600 dark:bg-orange-500/15 dark:text-orange-400">
                         The PizzaHub Difference
                     </span>
 
-                    <h2 className="mt-4 text-3xl font-extrabold text-gray-900 sm:text-4xl md:text-5xl">
+                    <h2 className="mt-4 text-3xl font-extrabold text-gray-900 sm:text-4xl md:text-5xl dark:text-white">
                         Why Choose{" "}
                         <span className="text-orange-500">PizzaHub?</span>
                     </h2>
 
-                    <p className="mt-4 text-sm leading-7 text-gray-500 sm:text-base">
+                    <p className="mt-4 text-sm leading-7 text-gray-500 sm:text-base dark:text-gray-400">
                         Great pizza, trusted restaurants, and a convenient
                         ordering experience. Everything you need to satisfy
                         your pizza cravings.
@@ -84,19 +84,19 @@ const WhyChooseUs = () => {
                         return (
                             <div
                                 key={benefit.id}
-                                className="group rounded-2xl border border-orange-100 bg-white p-7 shadow-sm transition duration-300 hover:-translate-y-2 hover:border-orange-300 hover:shadow-xl"
+                                className="group rounded-2xl border border-orange-100 bg-white p-7 shadow-sm transition duration-300 hover:-translate-y-2 hover:border-orange-300 hover:shadow-xl dark:border-white/10 dark:bg-neutral-900 dark:hover:border-orange-500/40"
                             >
                                 {/* Icon */}
-                                <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-100 text-orange-600 transition duration-300 group-hover:bg-orange-500 group-hover:text-white">
+                                <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-100 text-orange-600 transition duration-300 group-hover:bg-orange-500 group-hover:text-white dark:bg-orange-500/15 dark:text-orange-400 dark:group-hover:bg-orange-500 dark:group-hover:text-white">
                                     <Icon size={27} />
                                 </div>
 
                                 {/* Content */}
-                                <h3 className="text-xl font-bold text-gray-900 transition group-hover:text-orange-600">
+                                <h3 className="text-xl font-bold text-gray-900 transition group-hover:text-orange-600 dark:text-white dark:group-hover:text-orange-400">
                                     {benefit.title}
                                 </h3>
 
-                                <p className="mt-3 text-sm leading-7 text-gray-500">
+                                <p className="mt-3 text-sm leading-7 text-gray-500 dark:text-gray-400">
                                     {benefit.description}
                                 </p>
                             </div>
