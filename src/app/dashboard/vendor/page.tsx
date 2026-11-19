@@ -23,6 +23,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
+import { AnalyticsCharts } from "@/components/dashboard/analytics-charts";
 import {
     getVendorMenuItems,
     getVendorOrders,
@@ -31,6 +32,7 @@ import {
 } from "@/lib/data";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { requireRole } from "@/lib/session";
+import type { MenuStatus, OrderStatus } from "@/lib/types/dashboard";
 
 export const instant = false;
 
@@ -46,6 +48,25 @@ export default async function VendorOverviewPage() {
 
     const recentOrders = orders.slice(0, 5);
     const recentItems = items.slice(0, 4);
+    const orderStatusCounts: Record<OrderStatus, number> = {
+        pending: 0,
+        accepted: 0,
+        rejected: 0,
+        cancelled: 0,
+    };
+    const menuStatusCounts: Record<MenuStatus, number> = {
+        pending: 0,
+        approved: 0,
+        rejected: 0,
+    };
+
+    for (const order of orders) {
+        orderStatusCounts[order.status] += 1;
+    }
+
+    for (const item of items) {
+        menuStatusCounts[item.status] += 1;
+    }
 
     return (
         <div className="flex flex-col gap-6">
@@ -158,6 +179,52 @@ export default async function VendorOverviewPage() {
                     }
                 />
             </div>
+
+            <AnalyticsCharts
+                panels={[
+                    {
+                        title: "Order status",
+                        description: "Current status of your customer orders.",
+                        data: [
+                            {
+                                label: "Pending",
+                                value: orderStatusCounts.pending,
+                            },
+                            {
+                                label: "Accepted",
+                                value: orderStatusCounts.accepted,
+                            },
+                            {
+                                label: "Rejected",
+                                value: orderStatusCounts.rejected,
+                            },
+                            {
+                                label: "Cancelled",
+                                value: orderStatusCounts.cancelled,
+                            },
+                        ],
+                    },
+                    {
+                        title: "Menu review status",
+                        description:
+                            "Approval status of the items submitted to PizzaHub.",
+                        data: [
+                            {
+                                label: "Pending",
+                                value: menuStatusCounts.pending,
+                            },
+                            {
+                                label: "Approved",
+                                value: menuStatusCounts.approved,
+                            },
+                            {
+                                label: "Rejected",
+                                value: menuStatusCounts.rejected,
+                            },
+                        ],
+                    },
+                ]}
+            />
 
             <div className="grid gap-6 xl:grid-cols-2">
                 <Card>

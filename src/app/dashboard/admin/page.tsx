@@ -21,6 +21,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
+import { AnalyticsCharts } from "@/components/dashboard/analytics-charts";
 import {
     getAdminMenuItems,
     getAdminStats,
@@ -28,6 +29,7 @@ import {
 } from "@/lib/data";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { requireRole } from "@/lib/session";
+import type { PaymentStatus } from "@/lib/types/dashboard";
 
 export const instant = false;
 
@@ -42,6 +44,19 @@ export default async function AdminOverviewPage() {
 
     const recentPending = pendingItems.slice(0, 5);
     const recentTransactions = transactions.slice(0, 5);
+    const adminCount = Math.max(
+        0,
+        stats.totalUsers - stats.totalVendors - stats.totalCustomers
+    );
+    const paymentStatusCounts: Record<PaymentStatus, number> = {
+        paid: 0,
+        pending: 0,
+        failed: 0,
+    };
+
+    for (const transaction of transactions) {
+        paymentStatusCounts[transaction.paymentStatus] += 1;
+    }
 
     return (
         <div className="flex flex-col gap-6">
@@ -99,6 +114,40 @@ export default async function AdminOverviewPage() {
                     hint="Subscription payments"
                 />
             </div>
+
+            <AnalyticsCharts
+                panels={[
+                    {
+                        title: "Accounts by role",
+                        description:
+                            "Current customer, vendor and admin account counts.",
+                        data: [
+                            { label: "Customers", value: stats.totalCustomers },
+                            { label: "Vendors", value: stats.totalVendors },
+                            { label: "Admins", value: adminCount },
+                        ],
+                    },
+                    {
+                        title: "Subscription payment status",
+                        description:
+                            "Payment outcomes recorded for Premium subscriptions.",
+                        data: [
+                            {
+                                label: "Paid",
+                                value: paymentStatusCounts.paid,
+                            },
+                            {
+                                label: "Pending",
+                                value: paymentStatusCounts.pending,
+                            },
+                            {
+                                label: "Failed",
+                                value: paymentStatusCounts.failed,
+                            },
+                        ],
+                    },
+                ]}
+            />
 
             <div className="grid gap-6 xl:grid-cols-2">
                 <Card>
