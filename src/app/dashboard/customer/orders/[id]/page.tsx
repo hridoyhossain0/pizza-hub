@@ -12,6 +12,7 @@ import {
 import { PageHeader } from "@/components/dashboard/page-header";
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import { CancelOrderButton } from "@/components/dashboard/customer/cancel-order";
+import { OrderStatusTimeline } from "@/components/dashboard/customer/order-status-timeline";
 import { Button } from "@/components/ui/button";
 import {
     Card,
@@ -164,44 +165,11 @@ export default async function CustomerOrderDetailPage({
                             Statuses update as the restaurant responds.
                         </CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4 text-sm">
-                        {[
-                            {
-                                label: "Pending",
-                                active: order.status === "pending",
-                                text: "Waiting for the restaurant to accept or reject.",
-                            },
-                            {
-                                label: "Accepted",
-                                active: order.status === "accepted",
-                                text: "The restaurant confirmed your order.",
-                            },
-                            {
-                                label: "Rejected",
-                                active: order.status === "rejected",
-                                text: "The restaurant could not fulfil this order.",
-                            },
-                            {
-                                label: "Cancelled",
-                                active: order.status === "cancelled",
-                                text: "You cancelled this order before a decision.",
-                            },
-                        ].map((step) => (
-                            <div
-                                key={step.label}
-                                className={
-                                    step.active
-                                        ? "rounded-lg border border-orange-200 bg-orange-50 p-3"
-                                        : "rounded-lg border p-3 opacity-70"
-                                }
-                            >
-                                <p className="font-semibold">{step.label}</p>
-                                <p className="mt-1 text-xs text-muted-foreground">
-                                    {step.text}
-                                </p>
-                            </div>
-                        ))}
-                    </CardContent>
+                    <OrderStatusTimeline
+                        status={order.status}
+                        createdAt={order.createdAt}
+                        updatedAt={order.updatedAt}
+                    />
                 </Card>
             </div>
         </div>
