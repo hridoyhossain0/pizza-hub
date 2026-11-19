@@ -23,6 +23,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { authClient } from "@/lib/auth-client";
+import { clearAccessToken } from "@/lib/api-client";
 import { ROLE_LABELS } from "@/lib/roles";
 import type { UserRole } from "@/lib/roles";
 
@@ -56,6 +57,7 @@ export function UserMenu({ user }: UserMenuProps) {
         try {
             await authClient.signOut();
         } finally {
+            clearAccessToken();
             router.replace("/sign-in");
             router.refresh();
             setSigningOut(false);

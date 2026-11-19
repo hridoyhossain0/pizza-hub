@@ -20,8 +20,10 @@ import {
 } from "lucide-react";
 
 import { authClient } from "@/lib/auth-client";
+import { clearAccessToken } from "@/lib/api-client";
 import { setInitialRole } from "@/lib/actions/auth";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 type AccountRole = "customer" | "vendor";
 
@@ -45,22 +47,27 @@ export default function SignUpForm() {
     ];
     const passwordValid = rules.every((rule) => rule.valid);
 
+    const fail = (message: string) => {
+        setError(message);
+        toast.error("Sign up failed", { description: message });
+    };
+
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setError("");
 
         if (!name.trim() || !email.trim() || !password) {
-            setError("Please fill in all required fields.");
+            fail("Please fill in all required fields.");
             return;
         }
 
         if (!passwordValid) {
-            setError("Please meet all password requirements.");
+            fail("Please meet all password requirements.");
             return;
         }
 
         if (password !== confirmPassword) {
-            setError("The passwords do not match.");
+            fail("The passwords do not match.");
             return;
         }
 
@@ -74,7 +81,7 @@ export default function SignUpForm() {
             });
 
             if (authError) {
-                setError(
+                fail(
                     authError.message || "Registration failed. Please try again."
                 );
                 return;
@@ -83,14 +90,18 @@ export default function SignUpForm() {
             const roleResult = await setInitialRole(role);
 
             if (!roleResult.ok) {
-                setError(roleResult.message);
+                fail(roleResult.message);
                 return;
             }
 
+            toast.success("Account created", {
+                description: "Welcome to PizzaHub!",
+            });
+            clearAccessToken();
             router.replace("/dashboard");
             router.refresh();
         } catch (signUpError) {
-            setError(
+            fail(
                 signUpError instanceof Error
                     ? signUpError.message
                     : "Something went wrong. Please try again."
@@ -111,13 +122,11 @@ export default function SignUpForm() {
             });
 
             if (authError) {
-                setError(
-                    authError.message || "Google sign-up is not available."
-                );
+                fail(authError.message || "Google sign-up is not available.");
                 setGoogleLoading(false);
             }
         } catch {
-            setError("Google sign-up failed. Please try again.");
+            fail("Google sign-up failed. Please try again.");
             setGoogleLoading(false);
         }
     };

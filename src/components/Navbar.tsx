@@ -25,6 +25,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { authClient } from "@/lib/auth-client";
+import { clearAccessToken } from "@/lib/api-client";
 
 function getInitials(name: string) {
     const initials = name
@@ -60,6 +61,7 @@ const Navbar = () => {
         try {
             await authClient.signOut();
         } finally {
+            clearAccessToken();
             setMobileOpen(false);
             router.replace("/");
             router.refresh();

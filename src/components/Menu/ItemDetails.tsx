@@ -3,6 +3,8 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 import {
     ArrowLeft,
     ArrowRight,
@@ -132,43 +134,48 @@ export default function ItemDetails({
         try {
             setOrdering(true);
 
-            const response = await fetch("/api/orders", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                credentials: "include",
-                body: JSON.stringify({
-                    itemId: item._id,
-                    quantity,
-                    deliveryDate,
-                    deliveryAddress: deliveryAddress.trim(),
-                    message: specialInstructions.trim(),
-                }),
-            });
-
-            const data = (await response.json()) as { message?: string };
+            const { response, data } = await apiFetch<{ message?: string }>(
+                "/api/orders",
+                {
+                    method: "POST",
+                    body: JSON.stringify({
+                        itemId: item._id,
+                        quantity,
+                        deliveryDate,
+                        deliveryAddress: deliveryAddress.trim(),
+                        message: specialInstructions.trim(),
+                    }),
+                }
+            );
 
             if (!response.ok) {
                 throw new Error(
-                    data.message || "Unable to place your order."
+                    data?.message || "Unable to place your order."
                 );
             }
 
-            setMessage(
-                data.message || "Your order has been placed successfully!"
-            );
+            const successMessage =
+                data?.message || "Your order has been placed successfully!";
+
+            setMessage(successMessage);
+            toast.success("Order placed", {
+                description: successMessage,
+            });
             setOrderPlaced(true);
             setShowOrderForm(false);
             setDeliveryDate("");
             setDeliveryAddress("");
             setSpecialInstructions("");
         } catch (error) {
-            setMessage(
+            const errorMessage =
                 error instanceof Error
                     ? error.message
-                    : "Something went wrong. Please try again."
-            );
+                    : "Something went wrong. Please try again.";
+
+            setMessage(errorMessage);
+            toast.error("Order not placed", {
+                description: errorMessage,
+            });
         } finally {
             setOrdering(false);
         }

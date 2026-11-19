@@ -6,6 +6,7 @@ import { Loader2, LogOut } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
+import { clearAccessToken } from "@/lib/api-client";
 
 export function SignOutButton() {
     const router = useRouter();
@@ -17,6 +18,7 @@ export function SignOutButton() {
         try {
             await authClient.signOut();
         } finally {
+            clearAccessToken();
             router.replace("/sign-in");
             router.refresh();
             setPending(false);

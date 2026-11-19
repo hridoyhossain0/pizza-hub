@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 
 import { authClient } from "@/lib/auth-client";
+import { clearAccessToken } from "@/lib/api-client";
+import { toast } from "sonner";
 
 export default function SignInForm({
     callbackUrl,
@@ -34,12 +36,17 @@ export default function SignInForm({
     const [googleLoading, setGoogleLoading] = useState(false);
     const [error, setError] = useState("");
 
+    const fail = (message: string) => {
+        setError(message);
+        toast.error("Sign in failed", { description: message });
+    };
+
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setError("");
 
         if (!email.trim() || !password) {
-            setError("Please enter your email and password.");
+            fail("Please enter your email and password.");
             return;
         }
 
@@ -53,16 +60,18 @@ export default function SignInForm({
             });
 
             if (authError) {
-                setError(
-                    authError.message || "Invalid email or password."
-                );
+                fail(authError.message || "Invalid email or password.");
                 return;
             }
 
+            toast.success("Welcome back", {
+                description: "You are signed in.",
+            });
+            clearAccessToken();
             router.replace(callbackUrl || "/dashboard");
             router.refresh();
         } catch (signInError) {
-            setError(
+            fail(
                 signInError instanceof Error
                     ? signInError.message
                     : "Something went wrong. Please try again."
@@ -83,13 +92,11 @@ export default function SignInForm({
             });
 
             if (authError) {
-                setError(
-                    authError.message || "Google sign-in is not available."
-                );
+                fail(authError.message || "Google sign-in is not available.");
                 setGoogleLoading(false);
             }
         } catch {
-            setError("Google sign-in failed. Please try again.");
+            fail("Google sign-in failed. Please try again.");
             setGoogleLoading(false);
         }
     };
