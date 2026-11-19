@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { guard } from "@/lib/actions/guard";
 import { idFilter, usersCollection } from "@/lib/db";
-import { getImageFile, uploadImageToImgBb } from "@/lib/imgbb";
+import { getImageFile, uploadImage } from "@/lib/upload";
 import type { ActionResult } from "@/lib/types/dashboard";
 
 const PROTECTED_FIELDS = [
@@ -64,7 +64,7 @@ export async function saveAccountProfile(
 
     if (imageFile) {
         try {
-            image = await uploadImageToImgBb(imageFile);
+            image = await uploadImage(imageFile);
         } catch (uploadError) {
             return fail(
                 uploadError instanceof Error

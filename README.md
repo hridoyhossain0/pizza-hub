@@ -24,27 +24,47 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 
 Premium upgrades use Stripe Checkout (one-time payment for a 30-day period). Stripe is only used for vendor subscriptions; customer orders keep the existing cash-on-delivery flow.
 
-1. Add test keys to `.env`:
+The payment API lives in the Express backend at `../pizza-hub-server` (port `7000`). The Next.js app only calls it from the browser and reads the saved payment result.
+
+1. Add the frontend API URL to `pizza-hub/.env`:
 
 ```bash
+NEXT_PUBLIC_API_URL=http://localhost:7000
+```
+
+2. In `pizza-hub-server/.env`, add the shared auth secret and Stripe keys:
+
+```bash
+BETTER_AUTH_SECRET=<same value as the frontend>
+BETTER_AUTH_URL=http://localhost:3000
+APP_URL=http://localhost:3000
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 STRIPE_CURRENCY=bdt
 STRIPE_UNIT_AMOUNT=49900   # ৳499.00 in minor units
-APP_URL=http://localhost:3000
 ```
 
-2. Forward webhooks while developing:
+3. Start both apps:
 
 ```bash
-stripe listen --forward-to localhost:3000/api/payments/webhook
+# terminal 1 — backend API
+cd pizza-hub-server && npm run dev
+
+# terminal 2 — frontend
+cd pizza-hub && npm run dev
 ```
 
-3. Use the test card `4242 4242 4242 4242`, any future expiry date and any CVC.
+4. Forward webhooks to the Express server while developing:
 
-Premium is activated **only** by the signature-verified webhook (`/api/payments/webhook`). The success page cannot activate a plan, and checkout sessions are always created for the signed-in vendor.
+```bash
+stripe listen --forward-to localhost:7000/api/payments/webhook
+```
 
-`IMGBB_API_KEY` must contain a real ImgBB API key for profile and menu image uploads.
+5. Use the test card `4242 4242 4242 4242`, any future expiry date and any CVC.
+
+Premium is activated **only** by the signature-verified webhook in the Express server. The success page cannot activate a plan; it only reads the transaction the webhook saved. Checkout sessions are always created from the authenticated vendor session, and the vendor id is never read from the request body.
+
+Menu and profile images are uploaded through the Express API (`POST /api/uploads`) and stored in MongoDB, then served from `GET /api/images/:id`. No third-party image host or API key is required. Set `PUBLIC_API_URL` in `pizza-hub-server/.env` to the public API origin so stored image links work in production.
 
 ## Learn More
 

@@ -19,9 +19,9 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { getVendorProfile } from "@/lib/data";
-import { formatDate } from "@/lib/format";
+import { idFilter, transactionsCollection } from "@/lib/db";
+import { formatCurrency, formatDate } from "@/lib/format";
 import { requireRole } from "@/lib/session";
-import { getStripe } from "@/lib/stripe";
 
 export const instant = false;
 
@@ -36,25 +36,19 @@ export default async function PaymentSuccessPage({
     const profile = await getVendorProfile(user.id);
     const isPremium = profile?.subscriptionPlan === "premium";
 
-    let paid = false;
-    let belongsToUser = false;
-    const stripe = getStripe();
-    // Without Stripe keys we cannot verify the session, so never hint that the
-    // session belongs to a different account.
-    let lookupFailed = Boolean(sessionId) && !stripe;
+    // The API server writes the transaction only after Stripe's signature is
+    // verified. Filtering by `vendorId` means one vendor can never read another
+    // vendor's payment, and no Stripe secret key is needed in this frontend.
+    const payment = sessionId
+        ? await transactionsCollection.findOne({
+              stripeSessionId: sessionId,
+              vendorId: idFilter(user.id),
+          })
+        : null;
 
-    if (sessionId && stripe) {
-        try {
-            const session = await stripe.checkout.sessions.retrieve(sessionId);
-            belongsToUser = session.metadata?.vendorId === user.id;
-            paid = belongsToUser && session.payment_status === "paid";
-        } catch {
-            lookupFailed = true;
-        }
-    }
-
+    const paid = payment?.paymentStatus === "paid";
+    const stillPending = payment?.paymentStatus === "pending";
     const activationPending = paid && !isPremium;
-    const wrongAccount = Boolean(sessionId) && !lookupFailed && !belongsToUser;
 
     return (
         <div className="flex flex-col gap-6">
@@ -73,7 +67,7 @@ export default async function PaymentSuccessPage({
                     <CardTitle className="flex items-center gap-2">
                         {isPremium ? (
                             <CheckCircle2 className="size-5 text-emerald-600" />
-                        ) : activationPending ? (
+                        ) : activationPending || stillPending ? (
                             <Clock3 className="size-5 text-amber-600" />
                         ) : (
                             <XCircle className="size-5 text-red-600" />
@@ -82,8 +76,8 @@ export default async function PaymentSuccessPage({
                             ? "You are Premium"
                             : activationPending
                               ? "Payment received — activating Premium"
-                              : wrongAccount
-                                ? "This payment belongs to another account"
+                              : stillPending
+                                ? "Payment is being confirmed"
                                 : "We could not confirm a payment yet"}
                     </CardTitle>
                     <CardDescription>
@@ -94,10 +88,10 @@ export default async function PaymentSuccessPage({
                                       : ""
                               }.`
                             : activationPending
-                              ? "Stripe confirmed the payment. The webhook is still saving your transaction and updating your subscription. This usually takes a few seconds."
-                              : wrongAccount
-                                ? "For security, a payment session can only be viewed by the vendor who created it."
-                                : "If you completed a payment, give Stripe a moment and check again. No charge is recorded until Stripe verifies it."}
+                              ? "Stripe confirmed the payment. The API server is finishing your transaction and subscription update. This usually takes a few seconds."
+                              : stillPending
+                                ? "Checkout was recorded. The signed Stripe webhook has not marked it paid yet, so your plan has not changed."
+                                : "If you completed a payment, give it a moment and check again. No charge is recorded until the Stripe webhook verifies it."}
                     </CardDescription>
                 </CardHeader>
 
@@ -114,8 +108,42 @@ export default async function PaymentSuccessPage({
                         </p>
                     </div>
 
+                    {payment ? (
+                        <div className="grid gap-2 rounded-xl border bg-muted/30 p-4 text-sm sm:grid-cols-3">
+                            <p>
+                                <span className="text-muted-foreground">
+                                    Amount:{" "}
+                                </span>
+                                <span className="font-semibold">
+                                    {payment.currency &&
+                                    payment.currency !== "bdt"
+                                        ? `${payment.amount.toLocaleString(
+                                              "en-US"
+                                          )} ${payment.currency.toUpperCase()}`
+                                        : formatCurrency(payment.amount)}
+                                </span>
+                            </p>
+                            <p>
+                                <span className="text-muted-foreground">
+                                    Recorded:{" "}
+                                </span>
+                                <span className="font-semibold">
+                                    {formatDate(payment.transactionDate)}
+                                </span>
+                            </p>
+                            <p>
+                                <span className="text-muted-foreground">
+                                    Status:{" "}
+                                </span>
+                                <span className="font-semibold capitalize">
+                                    {payment.paymentStatus}
+                                </span>
+                            </p>
+                        </div>
+                    ) : null}
+
                     <div className="flex flex-wrap gap-3">
-                        {activationPending ? (
+                        {activationPending || stillPending ? (
                             <Button asChild className="bg-amber-500 text-white hover:bg-amber-600">
                                 <a
                                     href={`/dashboard/vendor/subscription/success?session_id=${encodeURIComponent(

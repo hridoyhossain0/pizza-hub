@@ -8,7 +8,7 @@ import {
     menuItemsCollection,
     type MenuItemDocument,
 } from "@/lib/db";
-import { getImageFile, uploadImageToImgBb } from "@/lib/imgbb";
+import { getImageFile, uploadImage } from "@/lib/upload";
 import { expireVendorSubscription } from "@/lib/payments";
 import type { ActionResult } from "@/lib/types/dashboard";
 import { guard } from "@/lib/actions/guard";
@@ -157,7 +157,7 @@ export async function createMenuItem(
     let imageUrl: string;
 
     try {
-        imageUrl = await uploadImageToImgBb(image);
+        imageUrl = await uploadImage(image);
     } catch (uploadError) {
         return fail(
             uploadError instanceof Error
@@ -226,7 +226,7 @@ export async function updateMenuItem(
 
     if (image) {
         try {
-            imageUrl = await uploadImageToImgBb(image);
+            imageUrl = await uploadImage(image);
         } catch (uploadError) {
             return fail(
                 uploadError instanceof Error

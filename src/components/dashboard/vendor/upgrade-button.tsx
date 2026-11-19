@@ -6,6 +6,10 @@ import { Crown, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { ActionResult } from "@/lib/types/dashboard";
 
+const API_URL = (
+    process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:7000"
+).replace(/\/$/, "");
+
 export function UpgradeButton() {
     const [pending, startTransition] = useTransition();
     const [result, setResult] = useState<ActionResult | null>(null);
@@ -21,13 +25,13 @@ export function UpgradeButton() {
                     startTransition(async () => {
                         try {
                             const response = await fetch(
-                                "/api/payments/checkout",
+                                `${API_URL}/api/payments/checkout`,
                                 {
                                     method: "POST",
                                     headers: {
                                         "Content-Type": "application/json",
                                     },
-                                    credentials: "same-origin",
+                                    credentials: "include",
                                     body: JSON.stringify({}),
                                 }
                             );

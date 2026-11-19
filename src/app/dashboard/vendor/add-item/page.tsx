@@ -76,8 +76,8 @@ export default async function AddMenuItemPage() {
                         <CardHeader>
                             <CardTitle>Item details</CardTitle>
                             <CardDescription>
-                                All fields are required. Images are uploaded to
-                                ImgBB.
+                                All fields are required. Images must be JPG,
+                                PNG, WebP or GIF (max 5MB).
                             </CardDescription>
                         </CardHeader>
                         <CardContent>

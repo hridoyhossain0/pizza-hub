@@ -110,8 +110,7 @@ export function AccountProfileForm({ user }: AccountProfileFormProps) {
                             />
                             <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
                                 <Upload className="size-3.5" />
-                                Uploaded to ImgBB. JPG, PNG, WebP or GIF, max
-                                5MB.
+                                JPG, PNG, WebP or GIF, max 5MB.
                             </p>
 
                             {user.image ? (

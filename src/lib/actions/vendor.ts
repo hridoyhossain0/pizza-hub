@@ -8,7 +8,7 @@ import {
     menuItemsCollection,
     vendorProfilesCollection,
 } from "@/lib/db";
-import { getImageFile, uploadImageToImgBb } from "@/lib/imgbb";
+import { getImageFile, uploadImage } from "@/lib/upload";
 import type { ActionResult } from "@/lib/types/dashboard";
 import { guard } from "@/lib/actions/guard";
 
@@ -76,7 +76,7 @@ export async function saveVendorProfile(
 
     if (imageFile) {
         try {
-            image = await uploadImageToImgBb(imageFile);
+            image = await uploadImage(imageFile);
         } catch (uploadError) {
             return fail(
                 uploadError instanceof Error
