@@ -9,6 +9,7 @@ import {
     Store,
     ArrowRight,
     SlidersHorizontal,
+    ArrowUpDown,
     X,
     UtensilsCrossed,
 } from "lucide-react";
@@ -41,6 +42,9 @@ const BrowseMenu = ({
     const [search, setSearch] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("all");
     const [selectedLocation, setSelectedLocation] = useState("all");
+    const [sortBy, setSortBy] = useState<
+        "newest" | "price-asc" | "price-desc" | "name-asc"
+    >("newest");
 
     // Only approved and active menu items
     const availableItems = useMemo(
@@ -63,12 +67,22 @@ const BrowseMenu = ({
         [availableItems]
     );
 
-    // Search and filter
+    // Search, filter and then sort. Search covers the item name, category,
+    // location and restaurant so "pizza", "dhaka" or a vendor name all work.
     const filteredItems = useMemo(() => {
+        const query = search.toLowerCase().trim();
+
         return availableItems.filter((item) => {
-            const matchesSearch = item.name
-                .toLowerCase()
-                .includes(search.toLowerCase().trim());
+            const searchable = [
+                item.name,
+                item.category,
+                item.location,
+                item.vendor.name,
+            ]
+                .join(" ")
+                .toLowerCase();
+
+            const matchesSearch = !query || searchable.includes(query);
 
             const matchesCategory =
                 selectedCategory === "all" ||
@@ -91,10 +105,25 @@ const BrowseMenu = ({
         selectedLocation,
     ]);
 
+    const visibleItems = useMemo(() => {
+        const sorted = [...filteredItems];
+
+        if (sortBy === "price-asc") {
+            sorted.sort((a, b) => a.price - b.price);
+        } else if (sortBy === "price-desc") {
+            sorted.sort((a, b) => b.price - a.price);
+        } else if (sortBy === "name-asc") {
+            sorted.sort((a, b) => a.name.localeCompare(b.name));
+        }
+
+        return sorted;
+    }, [filteredItems, sortBy]);
+
     const clearFilters = () => {
         setSearch("");
         setSelectedCategory("all");
         setSelectedLocation("all");
+        setSortBy("newest");
     };
 
     const hasFilters =
@@ -126,10 +155,10 @@ const BrowseMenu = ({
 
                 {/* Search and Filters */}
                 <div className="mb-9 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-neutral-900 sm:p-6">
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
 
                         {/* Search */}
-                        <div className="relative md:col-span-1">
+                        <div className="relative md:col-span-2 xl:col-span-1">
                             <Search
                                 size={20}
                                 className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
@@ -139,7 +168,7 @@ const BrowseMenu = ({
                                 type="text"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                placeholder="Search pizza by name..."
+                                placeholder="Search name, vendor, category..."
                                 className="h-12 w-full rounded-xl border border-gray-200 bg-gray-50 pl-12 pr-4 text-sm text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-orange-400 focus:bg-white focus:ring-4 focus:ring-orange-100 dark:border-white/10 dark:bg-neutral-950 dark:text-gray-100 dark:placeholder:text-gray-500 dark:focus:border-orange-500/60 dark:focus:bg-neutral-950 dark:focus:ring-orange-500/20"
                             />
                         </div>
@@ -173,6 +202,38 @@ const BrowseMenu = ({
                                 </option>
                             ))}
                         </select>
+
+                        {/* Price / name sorting */}
+                        <div className="relative">
+                            <ArrowUpDown
+                                size={17}
+                                aria-hidden="true"
+                                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-orange-500"
+                            />
+                            <select
+                                aria-label="Sort menu items"
+                                value={sortBy}
+                                onChange={(e) =>
+                                    setSortBy(
+                                        e.target.value as
+                                            | "newest"
+                                            | "price-asc"
+                                            | "price-desc"
+                                            | "name-asc"
+                                    )
+                                }
+                                className="h-12 w-full rounded-xl border border-gray-200 bg-gray-50 pl-11 pr-4 text-sm text-gray-700 outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100 dark:border-white/10 dark:bg-neutral-950 dark:text-gray-200 dark:focus:border-orange-500/60 dark:focus:ring-orange-500/20"
+                            >
+                                <option value="newest">Sort: Newest</option>
+                                <option value="price-asc">
+                                    Price: Low to High
+                                </option>
+                                <option value="price-desc">
+                                    Price: High to Low
+                                </option>
+                                <option value="name-asc">Name: A to Z</option>
+                            </select>
+                        </div>
                     </div>
 
                     {/* Filter Summary */}
@@ -184,7 +245,7 @@ const BrowseMenu = ({
                             />
                             Showing{" "}
                             <span className="font-bold text-gray-900 dark:text-white">
-                                {filteredItems.length}
+                                {visibleItems.length}
                             </span>{" "}
                             of{" "}
                             <span className="font-bold text-gray-900 dark:text-white">
@@ -222,11 +283,11 @@ const BrowseMenu = ({
                             </div>
                         ))}
                     </div>
-                ) : filteredItems.length > 0 ? (
+                ) : visibleItems.length > 0 ? (
 
                     /* Menu Cards */
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                        {filteredItems.map((item) => (
+                        {visibleItems.map((item) => (
                             <article
                                 key={item._id}
                                 className="group overflow-hidden rounded-2xl border border-gray-100 bg-white dark:border-white/10 dark:bg-neutral-900 shadow-sm transition duration-300 hover:-translate-y-1.5 hover:shadow-xl"
