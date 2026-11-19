@@ -8,25 +8,25 @@ monitor subscription transactions.
 
 - **Frontend:** Next.js App Router + ShadCN UI (this repository)
 - **Backend:** Express + MongoDB (`../pizza-hub-server`)
-- **Live site:** _add the deployed frontend URL here_
-- **Client repository:** _add the GitHub URL here_
-- **Server repository:** _add the GitHub URL here_
+- **Deployment:** Vercel frontend + separately hosted Express API
 
-> The rubric requires live links and at least 20 client / 12 server meaningful
-> commits. Add the deployed URLs above after publishing.
+Set the live URLs after deployment. The frontend and API are separate services;
+the Express API must remain available for auth-token exchange, orders, Stripe
+and image uploads.
 
 ## Features
 
 ### Public
 
 - Landing page with hero, featured menu items (Premium vendors first), six pizza
-  categories, benefits and "how it works" sections.
+  categories, benefits and "how it works" sections with reduced-motion-aware
+  reveal animations.
 - Browse Menu with advanced search (name, category, location and restaurant),
   category/location filters, price sorting (low → high, high → low), loading
   skeletons and an empty state.
 - About and Contact pages; the contact form validates input and opens a
   pre-filled email draft.
-- Dark / light mode toggle (optional feature #2).
+- Dark / light mode toggle.
 
 ### Authentication & authorization
 
@@ -44,6 +44,7 @@ monitor subscription transactions.
 - Dashboard overview with order statistics.
 - View item details; ordering requires a signed-in Customer.
 - Track orders, view order details, cancel pending orders.
+- Follow an order-status timeline with placement and restaurant-response times.
 - Update name and profile image without being able to change role or plan.
 
 ### Vendor
@@ -58,7 +59,8 @@ monitor subscription transactions.
 ### Admin
 
 - Platform statistics for users, vendors, customers, menu items, pending reviews
-  and transactions.
+  and transactions, with role and subscription-payment charts.
+- Vendor overview charts show order and menu review status totals.
 - Search users, filter by role, block/unblock accounts.
 - Review, approve, reject, search and delete menu items.
 - Read-only transaction history (payment records cannot be edited).
@@ -68,7 +70,8 @@ monitor subscription transactions.
 | Area | Packages |
 | --- | --- |
 | Frontend | `next` 16 (App Router, Server Actions), `react` 19, `typescript` |
-| UI | `tailwindcss`, `shadcn`, `radix-ui`, `lucide-react`, `sonner` |
+| UI | `tailwindcss`, `shadcn`, `radix-ui`, `lucide-react`, `sonner`, `motion` |
+| Charts | `recharts` |
 | Auth | `better-auth` (email/password + Google), `mongodb` adapter |
 | Data | `mongodb` driver |
 | Payments | `stripe` (Express backend Checkout + webhooks) |
@@ -80,17 +83,18 @@ Backend packages: `express`, `cors`, `mongodb`, `better-auth`, `stripe`,
 
 ## Environment variables
 
-Create `.env` in **each** repository. Never commit `.env` files.
+Create `.env` in **each** project folder. Never commit `.env` files or copy
+production secrets into the browser.
 
 ### `pizza-hub` (frontend)
 
 ```bash
 NEXT_PUBLIC_API_URL=http://localhost:7000
 MONGODB_URL=mongodb+srv://...
-BETTER_AUTH_SECRET=<shared secret>
+BETTER_AUTH_SECRET=<shared secret; use a long random value>
 BETTER_AUTH_URL=http://localhost:3000
-GOOGLE_CLIENT_ID=<google oauth client id>
-GOOGLE_CLIENT_SECRET=<google oauth client secret>
+GOOGLE_CLIENT_ID=<Google OAuth client id>
+GOOGLE_CLIENT_SECRET=<Google OAuth client secret>
 ```
 
 ### `pizza-hub-server` (backend)
@@ -104,14 +108,18 @@ PORT=7000
 PUBLIC_API_URL=http://localhost:7000
 JWT_SECRET=<random string, at least 16 characters>
 JWT_TTL_SECONDS=3600
-
+GOOGLE_CLIENT_ID=<same Google OAuth client id>
+GOOGLE_CLIENT_SECRET=<same Google OAuth client secret>
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 STRIPE_CURRENCY=bdt
 STRIPE_UNIT_AMOUNT=49900
 ```
 
-Generate a JWT secret with `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`.
+`PORT`, `PUBLIC_API_URL`, `JWT_TTL_SECONDS`, `STRIPE_CURRENCY`, and
+`STRIPE_UNIT_AMOUNT` have defaults. Set `PUBLIC_API_URL` to the public API origin
+in production. Generate `JWT_SECRET` with
+`node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`.
 
 ## Running locally
 
@@ -190,6 +198,14 @@ remains the source of truth for identity:
 Responses use `401` for missing/invalid/expired tokens and `403` for valid
 tokens with the wrong role or a blocked account.
 
+### Optional feature #2 — order status timeline
+
+The customer order detail page shows when the order was placed and whether the
+restaurant is still deciding, accepted it, rejected it, or it was cancelled.
+The response time uses the existing `updatedAt` value written by the vendor
+decision or customer cancellation action; the timeline does not invent delivery
+events that the current order model does not record.
+
 ## API routes (Express)
 
 | Method | Route | Access |
@@ -212,6 +228,46 @@ tokens with the wrong role or a blocked account.
   sign-in/sign-up, menu and profile forms, vendor/admin actions, image upload,
   order placement, cancellations and Stripe checkout. Inline form messages are
   kept for accessibility; no `alert()` calls are used.
+
+## Dashboard analytics
+
+The admin overview includes role distribution and Premium payment-status charts.
+The vendor overview includes order-status and menu-review charts. Both use
+Recharts with values derived from the existing server-side dashboard queries.
+The chart data is also available to assistive technology as text.
+
+## Screenshots
+
+![PizzaHub homepage](./screenshots/homepage.png)
+
+![Browse menu sorted by price, low to high](./screenshots/menu-price-sort.png)
+
+Dashboard and order screenshots should only be added from test accounts with
+sample data; never include personal information or provider secrets.
+
+## Deployment checklist
+
+1. Create a MongoDB Atlas database; permit connections from the selected API and
+   Vercel deployments, then use the same `MONGODB_URL` for both services.
+2. Deploy this Next.js app to Vercel. Set its environment variables from the
+   frontend list above, with `NEXT_PUBLIC_API_URL` set to the deployed Express
+   origin.
+3. Deploy `pizza-hub-server` to a Node-compatible host. Set its backend
+   variables, `APP_URL` to the Vercel origin, and `PUBLIC_API_URL` to the API
+   origin. Configure the host to run `npm start` and bind to `PORT`.
+4. In Google Cloud OAuth, add the production Better Auth callback URL
+   `https://<frontend-domain>/api/auth/callback/google` as an authorized redirect
+   URI, and allow the deployed frontend origin.
+5. In Stripe, register
+   `https://<api-domain>/api/payments/webhook` for checkout completion events
+   handled by the API, then set the issued signing secret as
+   `STRIPE_WEBHOOK_SECRET`.
+6. Confirm the API `/health` endpoint responds, sign in with Google and email,
+   reload public and dashboard routes, verify browser CORS, and complete a Stripe
+   test-mode upgrade before enabling live keys.
+
+Set concrete URLs only after both services and provider callback URLs are known.
+Never put server-only secrets in `NEXT_PUBLIC_*` variables.
 
 ## Scripts
 
