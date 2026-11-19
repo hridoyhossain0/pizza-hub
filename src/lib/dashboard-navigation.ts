@@ -1,12 +1,15 @@
 import {
+    BadgeCheck,
     ClipboardList,
     CreditCard,
     House,
     LayoutDashboard,
     PlusCircle,
     Receipt,
+    ShieldCheck,
     ShoppingBag,
     Store,
+    UserRound,
     Users,
     UtensilsCrossed,
     type LucideIcon,
@@ -43,26 +46,10 @@ export const DASHBOARD_NAVIGATION: DashboardNavGroup[] = [
         items: [
             {
                 title: "Overview",
-                description: "A summary of your customer activity.",
-                href: "/dashboard/customer",
+                description: "A summary of your PizzaHub workspace.",
+                href: "/dashboard",
                 icon: LayoutDashboard,
-                roles: ["customer"],
-                exact: true,
-            },
-            {
-                title: "Overview",
-                description: "A summary of your restaurant.",
-                href: "/dashboard/vendor",
-                icon: LayoutDashboard,
-                roles: ["vendor"],
-                exact: true,
-            },
-            {
-                title: "Overview",
-                description: "A summary of the PizzaHub platform.",
-                href: "/dashboard/admin",
-                icon: LayoutDashboard,
-                roles: ["admin"],
+                roles: ALL_ROLES,
                 exact: true,
             },
         ],
@@ -71,27 +58,50 @@ export const DASHBOARD_NAVIGATION: DashboardNavGroup[] = [
         label: "Customer",
         items: [
             {
+                title: "Overview",
+                description: "Your order activity at a glance.",
+                href: "/dashboard/customer",
+                icon: UserRound,
+                roles: ["customer"],
+                exact: true,
+            },
+            {
                 title: "My Orders",
-                description: "Track your orders and cancel pending ones.",
+                description: "Track and manage the orders you placed.",
                 href: "/dashboard/customer/orders",
                 icon: ShoppingBag,
+                roles: ["customer"],
+            },
+            {
+                title: "My Profile",
+                description: "Update your name and profile image.",
+                href: "/dashboard/customer/profile",
+                icon: UserRound,
                 roles: ["customer"],
             },
         ],
     },
     {
-        label: "Vendor",
+        label: "My Restaurant",
         items: [
             {
+                title: "Overview",
+                description: "Menu, orders, and subscription at a glance.",
+                href: "/dashboard/vendor",
+                icon: Store,
+                roles: ["vendor"],
+                exact: true,
+            },
+            {
                 title: "Add Menu Item",
-                description: "Create a new dish for admin review.",
+                description: "Submit a new dish for admin approval.",
                 href: "/dashboard/vendor/add-item",
                 icon: PlusCircle,
                 roles: ["vendor"],
             },
             {
                 title: "My Menu Items",
-                description: "Update, delete and manage availability.",
+                description: "Update, remove, or pause your dishes.",
                 href: "/dashboard/vendor/menu",
                 icon: UtensilsCrossed,
                 roles: ["vendor"],
@@ -104,41 +114,49 @@ export const DASHBOARD_NAVIGATION: DashboardNavGroup[] = [
                 roles: ["vendor"],
             },
             {
-                title: "Subscription",
-                description: "Compare plans and upgrade to Premium.",
-                href: "/dashboard/vendor/subscription",
-                icon: CreditCard,
+                title: "Restaurant Profile",
+                description: "Manage the public details of your restaurant.",
+                href: "/dashboard/vendor/profile",
+                icon: Store,
                 roles: ["vendor"],
             },
             {
-                title: "Restaurant Profile",
-                description: "Manage your public restaurant details.",
-                href: "/dashboard/vendor/profile",
-                icon: Store,
+                title: "Subscription",
+                description: "Manage your Free or Premium plan.",
+                href: "/dashboard/vendor/subscription",
+                icon: CreditCard,
                 roles: ["vendor"],
             },
         ],
     },
     {
-        label: "Admin",
+        label: "Administration",
         items: [
             {
+                title: "Overview",
+                description: "Platform-wide activity at a glance.",
+                href: "/dashboard/admin",
+                icon: ShieldCheck,
+                roles: ["admin"],
+                exact: true,
+            },
+            {
                 title: "Manage Users",
-                description: "Search, inspect, block and unblock accounts.",
+                description: "Search, inspect, block, and unblock accounts.",
                 href: "/dashboard/admin/users",
                 icon: Users,
                 roles: ["admin"],
             },
             {
                 title: "Manage Menu Items",
-                description: "Approve, reject or remove submitted items.",
+                description: "Approve, reject, and remove submissions.",
                 href: "/dashboard/admin/menu",
-                icon: UtensilsCrossed,
+                icon: BadgeCheck,
                 roles: ["admin"],
             },
             {
                 title: "Transactions",
-                description: "Review subscription payment records.",
+                description: "Read-only subscription payment records.",
                 href: "/dashboard/admin/transactions",
                 icon: Receipt,
                 roles: ["admin"],
@@ -175,13 +193,27 @@ export function getNavigationForRole(role: UserRole): DashboardNavGroup[] {
     })).filter((group) => group.items.length > 0);
 }
 
-/** Flat title lookup used by breadcrumbs. */
+/**
+ * Flat title lookup used by breadcrumbs. Exact matches win, then the most
+ * specific path prefix (so `/dashboard/vendor/menu/:id` resolves to
+ * "My Menu Items" instead of the parent Overview entry).
+ */
 export function getNavTitleForPath(pathname: string): string | undefined {
     const items = DASHBOARD_NAVIGATION.flatMap((group) => group.items);
 
-    return items.find((item) =>
-        item.exact
-            ? pathname === item.href
-            : pathname === item.href || pathname.startsWith(`${item.href}/`)
-    )?.title;
+    const exact = items.find(
+        (item) => item.exact && pathname === item.href
+    );
+
+    if (exact) {
+        return exact.title;
+    }
+
+    return items
+        .filter(
+            (item) =>
+                pathname === item.href ||
+                pathname.startsWith(`${item.href}/`)
+        )
+        .sort((a, b) => b.href.length - a.href.length)[0]?.title;
 }

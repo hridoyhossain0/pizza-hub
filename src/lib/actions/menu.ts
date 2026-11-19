@@ -4,11 +4,12 @@ import { revalidatePath } from "next/cache";
 import { ObjectId, type Filter } from "mongodb";
 
 import {
+    idFilter,
     menuItemsCollection,
-    vendorProfilesCollection,
     type MenuItemDocument,
 } from "@/lib/db";
 import { getImageFile, uploadImageToImgBb } from "@/lib/imgbb";
+import { expireVendorSubscription } from "@/lib/payments";
 import type { ActionResult } from "@/lib/types/dashboard";
 import { guard } from "@/lib/actions/guard";
 
@@ -100,7 +101,7 @@ function parseMenuFields(
 
 async function countActiveItems(vendorId: string, excludeId?: ObjectId) {
     const filter: Filter<MenuItemDocument> = {
-        vendorId,
+        vendorId: idFilter(vendorId),
         isActive: true,
         status: { $ne: "rejected" },
     };
@@ -134,9 +135,8 @@ export async function createMenuItem(
         return fail("Please upload an image for this menu item.");
     }
 
-    const profile = await vendorProfilesCollection.findOne({
-        userId: user.id,
-    });
+    // Lazy expiry ensures an overdue Premium subscription is treated as Free.
+    const profile = await expireVendorSubscription(user.id);
 
     if (!profile) {
         return fail(
@@ -208,7 +208,7 @@ export async function updateMenuItem(
 
     const existing = await menuItemsCollection.findOne({
         _id: new ObjectId(itemId),
-        vendorId: user.id,
+        vendorId: idFilter(user.id),
     });
 
     if (!existing) {
@@ -236,12 +236,10 @@ export async function updateMenuItem(
         }
     }
 
-    const profile = await vendorProfilesCollection.findOne({
-        userId: user.id,
-    });
+    const profile = await expireVendorSubscription(user.id);
 
     await menuItemsCollection.updateOne(
-        { _id: existing._id, vendorId: user.id },
+        { _id: existing._id, vendorId: idFilter(user.id) },
         {
             $set: {
                 ...parsed.data,
@@ -277,7 +275,7 @@ export async function deleteMenuItem(
 
     const result = await menuItemsCollection.deleteOne({
         _id: new ObjectId(itemId),
-        vendorId: user.id,
+        vendorId: idFilter(user.id),
     });
 
     if (result.deletedCount === 0) {
@@ -305,7 +303,7 @@ export async function setMenuItemAvailability(
 
     const item = await menuItemsCollection.findOne({
         _id: new ObjectId(itemId),
-        vendorId: user.id,
+        vendorId: idFilter(user.id),
     });
 
     if (!item) {
@@ -313,10 +311,7 @@ export async function setMenuItemAvailability(
     }
 
     if (isActive && item.status !== "rejected") {
-        const plan = await vendorProfilesCollection.findOne(
-            { userId: user.id },
-            { projection: { subscriptionPlan: 1 } }
-        );
+        const plan = await expireVendorSubscription(user.id);
 
         if (plan?.subscriptionPlan !== "premium") {
             const activeItems = await countActiveItems(user.id, item._id);
@@ -330,7 +325,7 @@ export async function setMenuItemAvailability(
     }
 
     await menuItemsCollection.updateOne(
-        { _id: item._id, vendorId: user.id },
+        { _id: item._id, vendorId: idFilter(user.id) },
         { $set: { isActive, updatedAt: new Date() } }
     );
 

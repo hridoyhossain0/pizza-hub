@@ -1,15 +1,12 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { Crown, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { upgradeToPremium } from "@/lib/actions/vendor";
 import type { ActionResult } from "@/lib/types/dashboard";
 
 export function UpgradeButton() {
-    const router = useRouter();
     const [pending, startTransition] = useTransition();
     const [result, setResult] = useState<ActionResult | null>(null);
 
@@ -22,10 +19,41 @@ export function UpgradeButton() {
                 onClick={() => {
                     setResult(null);
                     startTransition(async () => {
-                        const response = await upgradeToPremium();
-                        setResult(response);
-                        if (response.ok) {
-                            router.refresh();
+                        try {
+                            const response = await fetch(
+                                "/api/payments/checkout",
+                                {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                    },
+                                    credentials: "same-origin",
+                                    body: JSON.stringify({}),
+                                }
+                            );
+
+                            const data = (await response.json().catch(() => ({}))) as {
+                                url?: string;
+                                message?: string;
+                            };
+
+                            if (!response.ok || !data.url) {
+                                setResult({
+                                    ok: false,
+                                    message:
+                                        data.message ||
+                                        "Unable to start Stripe Checkout. Please try again.",
+                                });
+                                return;
+                            }
+
+                            window.location.assign(data.url);
+                        } catch {
+                            setResult({
+                                ok: false,
+                                message:
+                                    "Unable to reach the payment service. Please try again.",
+                            });
                         }
                     });
                 }}
@@ -36,17 +64,13 @@ export function UpgradeButton() {
                 ) : (
                     <Crown aria-hidden="true" />
                 )}
-                {pending ? "Processing upgrade..." : "Upgrade to Premium"}
+                {pending ? "Redirecting to Stripe..." : "Upgrade to Premium"}
             </Button>
 
             {result?.message ? (
                 <p
-                    role={result.ok ? "status" : "alert"}
-                    className={
-                        result.ok
-                            ? "rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700"
-                            : "rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
-                    }
+                    role="alert"
+                    className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
                 >
                     {result.message}
                 </p>

@@ -16,15 +16,16 @@ import {
 import { getNavTitleForPath } from "@/lib/dashboard-navigation";
 
 function toLabel(pathname: string, segment: string) {
+    // Dynamic segments (Mongo ids) get a readable label before the prefix
+    // lookup, otherwise the parent page title would be repeated.
+    if (/^[0-9a-f]{24}$/i.test(segment) || /^\d+$/.test(segment)) {
+        return "Details";
+    }
+
     const known = getNavTitleForPath(pathname);
 
     if (known) {
         return known;
-    }
-
-    // Dynamic segments (menu item ids) get a readable fallback.
-    if (/^[0-9a-f]{24}$/i.test(segment) || /^\d+$/.test(segment)) {
-        return "Details";
     }
 
     return segment

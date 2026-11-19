@@ -1,4 +1,5 @@
 import { PageHeader } from "@/components/dashboard/page-header";
+import { AccountProfileForm } from "@/components/dashboard/profile/account-profile-form";
 import { VendorProfileForm } from "@/components/dashboard/vendor/profile-form";
 import {
     Card,
@@ -20,13 +21,32 @@ export default async function VendorProfilePage() {
         <div className="flex flex-col gap-6">
             <PageHeader
                 title="Restaurant profile"
-                description="This information is shown to customers on your menu items and order pages."
+                description="Manage your account details and the public information customers see on your menu items."
             />
 
             <Card>
                 <CardHeader>
+                    <CardTitle>Account details</CardTitle>
+                    <CardDescription>
+                        Your personal name and profile image. Your role and
+                        subscription can only be changed by the platform.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <AccountProfileForm
+                        user={{
+                            name: user.name,
+                            email: user.email,
+                            image: user.image,
+                        }}
+                    />
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
                     <CardTitle>
-                        {profile ? "Manage your profile" : "Create your profile"}
+                        {profile ? "Restaurant details" : "Create your restaurant profile"}
                     </CardTitle>
                     <CardDescription>
                         {profile

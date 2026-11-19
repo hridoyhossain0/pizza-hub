@@ -36,15 +36,15 @@ try {
         process.exit(1);
     }
 
-    const existing = await db
-        .collection("menuItems")
-        .countDocuments({ vendorId: vendor._id });
+    const existing = await db.collection("menuItems").countDocuments({
+        vendorId: { $in: [String(vendor._id), vendor._id] },
+    });
 
     if (existing > 0) {
         console.log("Demo menu already exists, nothing to do.");
     } else {
         await db.collection("vendorProfiles").updateOne(
-            { userId: vendor._id },
+            { userId: String(vendor._id) },
             {
                 $set: {
                     restaurantName: "Pizza Palace",
@@ -60,7 +60,7 @@ try {
                 },
                 $setOnInsert: {
                     _id: new ObjectId(),
-                    userId: vendor._id,
+                    userId: String(vendor._id),
                     createdAt: now,
                 },
             },
@@ -122,7 +122,7 @@ try {
 
         const documents = items.map((item) => ({
             _id: new ObjectId(),
-            vendorId: vendor._id,
+            vendorId: String(vendor._id),
             vendorName: "Pizza Palace",
             vendorImage:
                 "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&q=80",
@@ -153,10 +153,10 @@ try {
 
             await db.collection("orders").insertOne({
                 _id: new ObjectId(),
-                customerId: customer._id,
+                customerId: String(customer._id),
                 customerName: customer.name,
                 customerEmail: customer.email,
-                vendorId: vendor._id,
+                vendorId: String(vendor._id),
                 vendorName: "Pizza Palace",
                 itemId: first._id.toString(),
                 itemName: first.name,

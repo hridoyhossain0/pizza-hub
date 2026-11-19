@@ -20,6 +20,32 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Stripe Premium setup
+
+Premium upgrades use Stripe Checkout (one-time payment for a 30-day period). Stripe is only used for vendor subscriptions; customer orders keep the existing cash-on-delivery flow.
+
+1. Add test keys to `.env`:
+
+```bash
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_CURRENCY=bdt
+STRIPE_UNIT_AMOUNT=49900   # ৳499.00 in minor units
+APP_URL=http://localhost:3000
+```
+
+2. Forward webhooks while developing:
+
+```bash
+stripe listen --forward-to localhost:3000/api/payments/webhook
+```
+
+3. Use the test card `4242 4242 4242 4242`, any future expiry date and any CVC.
+
+Premium is activated **only** by the signature-verified webhook (`/api/payments/webhook`). The success page cannot activate a plan, and checkout sessions are always created for the signed-in vendor.
+
+`IMGBB_API_KEY` must contain a real ImgBB API key for profile and menu image uploads.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

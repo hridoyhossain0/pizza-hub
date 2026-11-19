@@ -1,6 +1,7 @@
 import type { UserRole } from "@/lib/roles";
 
 export type SubscriptionPlan = "free" | "premium";
+export type SubscriptionStatus = "active" | "cancelled" | "expired";
 export type MenuStatus = "pending" | "approved" | "rejected";
 export type OrderStatus = "pending" | "accepted" | "rejected" | "cancelled";
 export type PaymentStatus = "paid" | "pending" | "failed";
@@ -21,7 +22,9 @@ export interface VendorProfileView {
     area: string;
     city: string;
     subscriptionPlan: SubscriptionPlan;
+    subscriptionStatus: SubscriptionStatus;
     premiumSince: Date | null;
+    premiumExpiresAt: Date | null;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -71,8 +74,17 @@ export interface TransactionView {
     vendorName: string;
     plan: SubscriptionPlan;
     amount: number;
+    currency?: string;
     paymentStatus: PaymentStatus;
     transactionDate: Date;
+    stripeSessionId?: string | null;
+}
+
+export interface SubscriptionView {
+    plan: SubscriptionPlan;
+    status: SubscriptionStatus;
+    premiumSince: Date | null;
+    premiumExpiresAt: Date | null;
 }
 
 export interface UserView {
@@ -124,3 +136,5 @@ export const MENU_CATEGORIES = [
 ] as const;
 
 export const PREMIUM_PRICE = 499;
+export const PREMIUM_PERIOD_DAYS = 30;
+export const FREE_ACTIVE_ITEM_LIMIT = 3;

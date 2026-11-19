@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { ObjectId } from "mongodb";
 
 import {
+    idFilter,
     menuItemsCollection,
     sessionsCollection,
     usersCollection,
@@ -45,7 +46,9 @@ export async function setUserBlocked(
         return fail("You cannot block your own administrator account.");
     }
 
-    const target = await usersCollection.findOne({ _id: userId });
+    const target = await usersCollection.findOne({
+        _id: idFilter(userId),
+    });
 
     if (!target) {
         return fail("User not found.");
@@ -56,13 +59,13 @@ export async function setUserBlocked(
     }
 
     await usersCollection.updateOne(
-        { _id: userId },
+        { _id: idFilter(userId) },
         { $set: { blocked, updatedAt: new Date() } }
     );
 
     if (blocked) {
         // Invalidate every active session immediately.
-        await sessionsCollection.deleteMany({ userId });
+        await sessionsCollection.deleteMany({ userId: idFilter(userId) });
     }
 
     revalidateAdmin();

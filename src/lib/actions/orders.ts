@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { ObjectId } from "mongodb";
 
-import { ordersCollection } from "@/lib/db";
+import { idFilter, ordersCollection } from "@/lib/db";
 import type { ActionResult } from "@/lib/types/dashboard";
 import { guard } from "@/lib/actions/guard";
 
@@ -48,7 +48,7 @@ export async function decideOrder(
     const result = await ordersCollection.updateOne(
         {
             _id: new ObjectId(orderId),
-            vendorId: user.id,
+            vendorId: idFilter(user.id),
             status: "pending",
         },
         {
@@ -92,7 +92,7 @@ export async function cancelOrder(orderId: string): Promise<ActionResult> {
     const result = await ordersCollection.updateOne(
         {
             _id: new ObjectId(orderId),
-            customerId: user.id,
+            customerId: idFilter(user.id),
             status: "pending",
         },
         {

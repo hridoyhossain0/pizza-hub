@@ -105,7 +105,14 @@ export default async function AdminTransactionsPage() {
                                             {transaction.plan}
                                         </td>
                                         <td className="py-4 pr-4 font-semibold">
-                                            {formatCurrency(transaction.amount)}
+                                            {transaction.currency &&
+                                            transaction.currency !== "bdt"
+                                                ? `${transaction.amount.toLocaleString(
+                                                      "en-US"
+                                                  )} ${transaction.currency.toUpperCase()}`
+                                                : formatCurrency(
+                                                      transaction.amount
+                                                  )}
                                         </td>
                                         <td className="py-4 pr-4">
                                             <StatusBadge

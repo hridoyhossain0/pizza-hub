@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { Check, Crown, Store, X } from "lucide-react";
+import { Check, Crown, ShieldCheck, Store } from "lucide-react";
 
 import { PageHeader } from "@/components/dashboard/page-header";
 import { StatusBadge } from "@/components/dashboard/status-badge";
+import { CancelPremiumButton } from "@/components/dashboard/vendor/cancel-premium-button";
 import { UpgradeButton } from "@/components/dashboard/vendor/upgrade-button";
 import { Button } from "@/components/ui/button";
 import {
@@ -141,7 +142,7 @@ export default async function VendorSubscriptionPage() {
                                 ৳{PREMIUM_PRICE}
                                 <span className="text-sm font-medium text-muted-foreground">
                                     {" "}
-                                    / month
+                                    / 30 days
                                 </span>
                             </p>
                         </CardHeader>
@@ -158,27 +159,52 @@ export default async function VendorSubscriptionPage() {
 
                             <div className="pt-4">
                                 {isPremium ? (
-                                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
-                                        <p className="font-bold">
-                                            Premium is active
-                                        </p>
-                                        <p className="mt-1 text-xs">
-                                            {profile.premiumSince
-                                                ? `Since ${formatDate(profile.premiumSince)}. `
-                                                : ""}
-                                            Your items are featured on the
-                                            homepage and carry the Premium
-                                            badge.
-                                        </p>
+                                    <div className="space-y-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+                                        <div>
+                                            <p className="font-bold">
+                                                Premium is active
+                                            </p>
+                                            <p className="mt-1 text-xs leading-6">
+                                                {profile.premiumSince
+                                                    ? `Since ${formatDate(profile.premiumSince)}. `
+                                                    : ""}
+                                                {profile.premiumExpiresAt
+                                                    ? `Your paid access runs until ${formatDate(profile.premiumExpiresAt)}. `
+                                                    : ""}
+                                                Your items are featured on the
+                                                homepage and carry the Premium
+                                                badge.
+                                            </p>
+                                        </div>
+
+                                        {profile.subscriptionStatus ===
+                                        "cancelled" ? (
+                                            <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+                                                Premium is cancelled. It stays
+                                                active until the end of the paid
+                                                period and will not continue
+                                                afterwards.
+                                            </p>
+                                        ) : (
+                                            <div className="space-y-2">
+                                                <p className="text-xs text-emerald-700">
+                                                    Premium is a one-time
+                                                    30-day payment. Renew it when
+                                                    the current period ends to
+                                                    keep unlimited items.
+                                                </p>
+                                                <CancelPremiumButton />
+                                            </div>
+                                        )}
                                     </div>
                                 ) : (
                                     <>
                                         <UpgradeButton />
                                         <p className="mt-2 flex items-start gap-1.5 text-xs text-muted-foreground">
-                                            <X className="mt-0.5 size-3.5 shrink-0" />
-                                            Demo checkout: the upgrade is
-                                            recorded as a paid transaction. No
-                                            real payment is collected.
+                                            <ShieldCheck className="mt-0.5 size-3.5 shrink-0" />
+                                            You will be redirected to Stripe
+                                            Checkout. Premium activates only
+                                            after Stripe verifies the payment.
                                         </p>
                                     </>
                                 )}

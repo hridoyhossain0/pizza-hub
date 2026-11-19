@@ -4,6 +4,8 @@ import { mongodbAdapter } from "@better-auth/mongo-adapter";
 import { mongoClient } from "@/lib/db";
 import { DEFAULT_USER_ROLE } from "@/lib/roles";
 
+// Share the exact same database as the dashboard data layer. The URI has no
+// database name, so `db()` resolves to MongoDB's default database ("test").
 const db = mongoClient.db();
 
 export const auth = betterAuth({

@@ -8,6 +8,7 @@ import {
     ArrowRight,
     CalendarDays,
     CheckCircle2,
+    CreditCard,
     MapPin,
     Store,
     ShoppingBag,
@@ -570,6 +571,20 @@ export default function ItemDetails({
                                             {ordering
                                                 ? "Placing order..."
                                                 : "Place order"}
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            disabled={ordering}
+                                            onClick={() =>
+                                                setMessage(
+                                                    "Online card payment is not enabled yet. Your order will be paid directly to the restaurant on delivery."
+                                                )
+                                            }
+                                            className="flex w-full items-center justify-center gap-2 rounded-xl border border-orange-200 bg-white px-5 py-3 text-sm font-bold text-orange-600 transition hover:bg-orange-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                        >
+                                            <CreditCard size={18} />
+                                            Pay with card
                                         </button>
 
                                         <p className="text-center text-[11px] text-gray-400">

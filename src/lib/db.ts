@@ -1,16 +1,37 @@
 import "server-only";
 
-import { MongoClient, type Collection, type ObjectId } from "mongodb";
+import { MongoClient, ObjectId, type Collection } from "mongodb";
 
 import type {
     MenuStatus,
     OrderStatus,
     PaymentStatus,
     SubscriptionPlan,
+    SubscriptionStatus,
 } from "@/lib/types/dashboard";
 
+/**
+ * Better Auth stores `_id` and session `userId` values as `ObjectId`, while
+ * `session.user.id` is always a string. Documents created by this app store
+ * foreign keys as strings, so every lookup has to accept both forms.
+ */
+export type EntityId = string | ObjectId;
+
+/** Matches a document id stored either as a string or as an ObjectId. */
+export function idFilter(value: string): { $in: EntityId[] } {
+    return {
+        $in: ObjectId.isValid(value)
+            ? [value, new ObjectId(value)]
+            : [value],
+    };
+}
+
+export function toObjectId(value: string): ObjectId | null {
+    return ObjectId.isValid(value) ? new ObjectId(value) : null;
+}
+
 export interface UserDocument {
-    _id: string;
+    _id: EntityId;
     name: string;
     email: string;
     image?: string | null;
@@ -22,21 +43,25 @@ export interface UserDocument {
 
 export interface VendorProfileDocument {
     _id: ObjectId;
-    userId: string;
+    userId: EntityId;
     restaurantName: string;
     description: string;
     image: string;
     area: string;
     city: string;
     subscriptionPlan: SubscriptionPlan;
+    subscriptionStatus?: SubscriptionStatus;
     premiumSince?: Date | null;
+    premiumExpiresAt?: Date | null;
+    stripeCustomerId?: string | null;
+    lastCheckoutSessionId?: string | null;
     createdAt: Date;
     updatedAt: Date;
 }
 
 export interface MenuItemDocument {
     _id: ObjectId;
-    vendorId: string;
+    vendorId: EntityId;
     vendorName: string;
     vendorImage?: string;
     vendorLocation?: string;
@@ -55,10 +80,10 @@ export interface MenuItemDocument {
 
 export interface OrderDocument {
     _id: ObjectId;
-    customerId: string;
+    customerId: EntityId;
     customerName: string;
     customerEmail: string;
-    vendorId: string;
+    vendorId: EntityId;
     vendorName: string;
     itemId: string;
     itemName: string;
@@ -75,13 +100,16 @@ export interface OrderDocument {
 
 export interface TransactionDocument {
     _id: ObjectId;
-    vendorId: string;
+    vendorId: EntityId;
     vendorName: string;
     plan: SubscriptionPlan;
     amount: number;
+    currency?: string;
     paymentStatus: PaymentStatus;
     transactionDate: Date;
     createdAt: Date;
+    stripeSessionId?: string | null;
+    stripePaymentIntentId?: string | null;
 }
 
 const uri = process.env.MONGODB_URL;

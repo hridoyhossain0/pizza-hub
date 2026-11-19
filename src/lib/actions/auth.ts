@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { usersCollection } from "@/lib/db";
+import { idFilter, usersCollection } from "@/lib/db";
 import type { ActionResult } from "@/lib/types/dashboard";
 import { guard } from "@/lib/actions/guard";
 
@@ -34,7 +34,7 @@ export async function setInitialRole(
     }
 
     await usersCollection.updateOne(
-        { _id: user.id },
+        { _id: idFilter(user.id) },
         {
             $set: {
                 role,

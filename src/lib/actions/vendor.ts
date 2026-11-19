@@ -4,15 +4,12 @@ import { revalidatePath } from "next/cache";
 import { ObjectId } from "mongodb";
 
 import {
+    idFilter,
     menuItemsCollection,
-    transactionsCollection,
     vendorProfilesCollection,
 } from "@/lib/db";
 import { getImageFile, uploadImageToImgBb } from "@/lib/imgbb";
-import {
-    PREMIUM_PRICE,
-    type ActionResult,
-} from "@/lib/types/dashboard";
+import type { ActionResult } from "@/lib/types/dashboard";
 import { guard } from "@/lib/actions/guard";
 
 function text(formData: FormData, key: string) {
@@ -71,7 +68,7 @@ export async function saveVendorProfile(
     }
 
     const existing = await vendorProfilesCollection.findOne({
-        userId: user.id,
+        userId: idFilter(user.id),
     });
 
     let image = existing?.image ?? "";
@@ -93,7 +90,7 @@ export async function saveVendorProfile(
     const location = `${area}, ${city}`;
 
     await vendorProfilesCollection.updateOne(
-        { userId: user.id },
+        { userId: idFilter(user.id) },
         {
             $set: {
                 restaurantName,
@@ -115,7 +112,7 @@ export async function saveVendorProfile(
 
     // Keep the denormalised vendor snapshot on menu items in sync.
     await menuItemsCollection.updateMany(
-        { vendorId: user.id },
+        { vendorId: idFilter(user.id) },
         {
             $set: {
                 vendorName: restaurantName,
@@ -131,7 +128,11 @@ export async function saveVendorProfile(
     return done("Restaurant profile saved successfully.");
 }
 
-export async function upgradeToPremium(): Promise<ActionResult> {
+/**
+ * Cancels the automatic continuation of Premium. The current paid period is
+ * preserved; the shared expiry helpers downgrade the vendor once it ends.
+ */
+export async function cancelPremium(): Promise<ActionResult> {
     const { user, error } = await guard(["vendor"]);
 
     if (!user) {
@@ -139,51 +140,32 @@ export async function upgradeToPremium(): Promise<ActionResult> {
     }
 
     const profile = await vendorProfilesCollection.findOne({
-        userId: user.id,
+        userId: idFilter(user.id),
     });
 
-    if (!profile) {
-        return fail(
-            "Create your restaurant profile before upgrading your subscription."
+    if (!profile || profile.subscriptionPlan !== "premium") {
+        return fail("You do not have an active Premium subscription.");
+    }
+
+    if (profile.subscriptionStatus === "cancelled") {
+        return done(
+            "Premium is already scheduled to end at the close of your paid period."
         );
     }
 
-    if (profile.subscriptionPlan === "premium") {
-        return done("Your subscription is already Premium.");
-    }
-
-    const now = new Date();
-
-    await transactionsCollection.insertOne({
-        _id: new ObjectId(),
-        vendorId: user.id,
-        vendorName: profile.restaurantName,
-        plan: "premium",
-        amount: PREMIUM_PRICE,
-        paymentStatus: "paid",
-        transactionDate: now,
-        createdAt: now,
-    });
-
     await vendorProfilesCollection.updateOne(
-        { userId: user.id },
+        { userId: idFilter(user.id), subscriptionPlan: "premium" },
         {
             $set: {
-                subscriptionPlan: "premium",
-                premiumSince: now,
-                updatedAt: now,
+                subscriptionStatus: "cancelled",
+                updatedAt: new Date(),
             },
         }
-    );
-
-    await menuItemsCollection.updateMany(
-        { vendorId: user.id },
-        { $set: { premium: true, updatedAt: now } }
     );
 
     revalidateVendor();
 
     return done(
-        "Welcome to Premium! You can now publish unlimited menu items with a Premium badge and featured placement."
+        "Premium will stay active until the end of your paid period and will not continue after that."
     );
 }

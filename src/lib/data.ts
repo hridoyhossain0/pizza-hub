@@ -4,17 +4,22 @@ import { connection } from "next/server";
 import { ObjectId, type Filter } from "mongodb";
 
 import {
+    idFilter,
     menuItemsCollection,
     ordersCollection,
     transactionsCollection,
     usersCollection,
-    vendorProfilesCollection,
     type MenuItemDocument,
     type OrderDocument,
     type TransactionDocument,
     type UserDocument,
     type VendorProfileDocument,
 } from "@/lib/db";
+import {
+    expireDueSubscriptions,
+    expireVendorSubscription,
+    subscriptionStatusOf,
+} from "@/lib/payments";
 import { normalizeUserRole, type UserRole } from "@/lib/roles";
 import type {
     AdminStats,
@@ -42,14 +47,16 @@ function toVendorProfile(
 
     return {
         _id: profile._id.toString(),
-        userId: profile.userId,
+        userId: profile.userId.toString(),
         restaurantName: profile.restaurantName,
         description: profile.description,
         image: profile.image,
         area: profile.area,
         city: profile.city,
         subscriptionPlan: profile.subscriptionPlan,
+        subscriptionStatus: subscriptionStatusOf(profile),
         premiumSince: profile.premiumSince ?? null,
+        premiumExpiresAt: profile.premiumExpiresAt ?? null,
         createdAt: profile.createdAt,
         updatedAt: profile.updatedAt,
     };
@@ -58,7 +65,7 @@ function toVendorProfile(
 function toMenuItem(item: MenuItemDocument): MenuItemView {
     return {
         _id: item._id.toString(),
-        vendorId: item.vendorId,
+        vendorId: item.vendorId.toString(),
         vendorName: item.vendorName,
         vendorImage: item.vendorImage,
         vendorLocation: item.vendorLocation,
@@ -79,10 +86,10 @@ function toMenuItem(item: MenuItemDocument): MenuItemView {
 function toOrder(order: OrderDocument): OrderView {
     return {
         _id: order._id.toString(),
-        customerId: order.customerId,
+        customerId: order.customerId.toString(),
         customerName: order.customerName,
         customerEmail: order.customerEmail,
-        vendorId: order.vendorId,
+        vendorId: order.vendorId.toString(),
         vendorName: order.vendorName,
         itemId: order.itemId,
         itemName: order.itemName,
@@ -101,29 +108,28 @@ function toOrder(order: OrderDocument): OrderView {
 function toTransaction(transaction: TransactionDocument): TransactionView {
     return {
         _id: transaction._id.toString(),
-        vendorId: transaction.vendorId,
+        vendorId: transaction.vendorId.toString(),
         vendorName: transaction.vendorName,
         plan: transaction.plan,
         amount: transaction.amount,
+        currency: transaction.currency,
         paymentStatus: transaction.paymentStatus,
         transactionDate: transaction.transactionDate,
+        stripeSessionId: transaction.stripeSessionId,
     };
 }
 
 export async function getVendorProfile(
     userId: string
 ): Promise<VendorProfileView | null> {
-    const profile = await vendorProfilesCollection.findOne({ userId });
+    const profile = await expireVendorSubscription(userId);
     return toVendorProfile(profile);
 }
 
 export async function getVendorPlan(
     userId: string
 ): Promise<SubscriptionPlan> {
-    const profile = await vendorProfilesCollection.findOne(
-        { userId },
-        { projection: { subscriptionPlan: 1 } }
-    );
+    const profile = await expireVendorSubscription(userId);
 
     return profile?.subscriptionPlan === "premium" ? "premium" : "free";
 }
@@ -132,7 +138,7 @@ export async function getVendorMenuItems(
     vendorId: string
 ): Promise<MenuItemView[]> {
     const items = await menuItemsCollection
-        .find({ vendorId })
+        .find({ vendorId: idFilter(vendorId) })
         .sort({ createdAt: -1 })
         .toArray();
 
@@ -149,7 +155,7 @@ export async function getVendorMenuItem(
 
     const item = await menuItemsCollection.findOne({
         _id: new ObjectId(itemId),
-        vendorId,
+        vendorId: idFilter(vendorId),
     });
 
     return item ? toMenuItem(item) : null;
@@ -159,7 +165,7 @@ export async function getVendorOrders(
     vendorId: string
 ): Promise<OrderView[]> {
     const orders = await ordersCollection
-        .find({ vendorId })
+        .find({ vendorId: idFilter(vendorId) })
         .sort({ createdAt: -1 })
         .toArray();
 
@@ -167,26 +173,27 @@ export async function getVendorOrders(
 }
 
 export async function getVendorStats(vendorId: string): Promise<VendorStats> {
-    const [
-        totalItems,
-        activeItems,
-        pendingOrders,
-        acceptedOrders,
-        profile,
-    ] = await Promise.all([
-        menuItemsCollection.countDocuments({ vendorId }),
-        menuItemsCollection.countDocuments({
-            vendorId,
-            isActive: true,
-            status: { $ne: "rejected" },
-        }),
-        ordersCollection.countDocuments({ vendorId, status: "pending" }),
-        ordersCollection.countDocuments({ vendorId, status: "accepted" }),
-        vendorProfilesCollection.findOne(
-            { userId: vendorId },
-            { projection: { subscriptionPlan: 1 } }
-        ),
-    ]);
+    const profile = await expireVendorSubscription(vendorId);
+
+    const [totalItems, activeItems, pendingOrders, acceptedOrders] =
+        await Promise.all([
+            menuItemsCollection.countDocuments({
+                vendorId: idFilter(vendorId),
+            }),
+            menuItemsCollection.countDocuments({
+                vendorId: idFilter(vendorId),
+                isActive: true,
+                status: { $ne: "rejected" },
+            }),
+            ordersCollection.countDocuments({
+                vendorId: idFilter(vendorId),
+                status: "pending",
+            }),
+            ordersCollection.countDocuments({
+                vendorId: idFilter(vendorId),
+                status: "accepted",
+            }),
+        ]);
 
     return {
         totalItems,
@@ -201,7 +208,7 @@ export async function getCustomerOrders(
     customerId: string
 ): Promise<OrderView[]> {
     const orders = await ordersCollection
-        .find({ customerId })
+        .find({ customerId: idFilter(customerId) })
         .sort({ createdAt: -1 })
         .toArray();
 
@@ -218,7 +225,7 @@ export async function getCustomerOrder(
 
     const order = await ordersCollection.findOne({
         _id: new ObjectId(orderId),
-        customerId,
+        customerId: idFilter(customerId),
     });
 
     return order ? toOrder(order) : null;
@@ -227,12 +234,26 @@ export async function getCustomerOrder(
 export async function getCustomerStats(
     customerId: string
 ): Promise<CustomerStats> {
+    const customerFilter = idFilter(customerId);
+
     const [total, pending, accepted, rejected, cancelled] = await Promise.all([
-        ordersCollection.countDocuments({ customerId }),
-        ordersCollection.countDocuments({ customerId, status: "pending" }),
-        ordersCollection.countDocuments({ customerId, status: "accepted" }),
-        ordersCollection.countDocuments({ customerId, status: "rejected" }),
-        ordersCollection.countDocuments({ customerId, status: "cancelled" }),
+        ordersCollection.countDocuments({ customerId: customerFilter }),
+        ordersCollection.countDocuments({
+            customerId: customerFilter,
+            status: "pending",
+        }),
+        ordersCollection.countDocuments({
+            customerId: customerFilter,
+            status: "accepted",
+        }),
+        ordersCollection.countDocuments({
+            customerId: customerFilter,
+            status: "rejected",
+        }),
+        ordersCollection.countDocuments({
+            customerId: customerFilter,
+            status: "cancelled",
+        }),
     ]);
 
     return { total, pending, accepted, rejected, cancelled };
@@ -293,7 +314,7 @@ export async function getAdminUsers(options: {
         .toArray();
 
     return users.map((user) => ({
-        _id: user._id,
+        _id: user._id.toString(),
         name: user.name,
         email: user.email,
         image: user.image ?? null,
@@ -344,6 +365,7 @@ export async function getAdminTransactions(): Promise<TransactionView[]> {
 export async function getPublicMenuItems(): Promise<MenuItemView[]> {
     // Live data: never prerender this list into the static shell.
     await connection();
+    await expireDueSubscriptions();
 
     const items = await menuItemsCollection
         .find({ status: "approved", isActive: true })
@@ -357,6 +379,7 @@ export async function getPublicMenuItem(
     itemId: string
 ): Promise<MenuItemView | null> {
     await connection();
+    await expireDueSubscriptions();
 
     if (!ObjectId.isValid(itemId)) {
         return null;
@@ -375,6 +398,7 @@ export async function getFeaturedMenuItems(
     limit = 6
 ): Promise<MenuItemView[]> {
     await connection();
+    await expireDueSubscriptions();
 
     const items = await menuItemsCollection
         .find({ status: "approved", isActive: true })

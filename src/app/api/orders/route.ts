@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 
 import { auth } from "@/lib/auth";
-import { menuItemsCollection, ordersCollection } from "@/lib/db";
+import { idFilter, menuItemsCollection, ordersCollection } from "@/lib/db";
 import { normalizeUserRole } from "@/lib/roles";
 
 interface OrderBody {
@@ -99,7 +99,7 @@ export async function POST(request: Request) {
         );
     }
 
-    if (item.vendorId === user.id) {
+    if (item.vendorId.toString() === user.id) {
         return NextResponse.json(
             { message: "You cannot order your own menu items." },
             { status: 403 }
@@ -161,7 +161,7 @@ export async function POST(request: Request) {
     }
 
     const duplicate = await ordersCollection.findOne({
-        customerId: user.id,
+        customerId: idFilter(user.id),
         itemId,
         deliveryDate,
         status: { $in: ["pending", "accepted"] },
@@ -184,7 +184,7 @@ export async function POST(request: Request) {
         customerId: user.id,
         customerName: user.name,
         customerEmail: user.email,
-        vendorId: item.vendorId,
+        vendorId: item.vendorId.toString(),
         vendorName: item.vendorName,
         itemId: item._id.toString(),
         itemName: item.name,
