@@ -8,6 +8,7 @@ import {
     Check,
     Eye,
     EyeOff,
+    ImagePlus,
     Loader2,
     LockKeyhole,
     Mail,
@@ -22,6 +23,8 @@ import {
 import { authClient } from "@/lib/auth-client";
 import { clearAccessToken } from "@/lib/api-client";
 import { setInitialRole } from "@/lib/actions/auth";
+import { saveAccountProfile } from "@/lib/actions/profile";
+import { EMPTY_ACTION } from "@/lib/types/dashboard";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -39,6 +42,8 @@ export default function SignUpForm() {
     const [loading, setLoading] = useState(false);
     const [googleLoading, setGoogleLoading] = useState(false);
     const [error, setError] = useState("");
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState("");
 
     const rules = [
         { label: "At least 6 characters", valid: password.length >= 6 },
@@ -94,6 +99,26 @@ export default function SignUpForm() {
                 return;
             }
 
+            // Optional profile picture. The account already exists, so this
+            // uploads through the authenticated profile action and is stored
+            // as an ImgBB URL on the user document.
+            if (imageFile) {
+                const profileForm = new FormData();
+                profileForm.set("name", name.trim());
+                profileForm.set("image", imageFile);
+
+                const profileResult = await saveAccountProfile(
+                    EMPTY_ACTION,
+                    profileForm
+                );
+
+                if (!profileResult.ok) {
+                    toast.warning("Account created without a profile picture", {
+                        description: profileResult.message,
+                    });
+                }
+            }
+
             toast.success("Account created", {
                 description: "Welcome to PizzaHub!",
             });
@@ -116,9 +141,11 @@ export default function SignUpForm() {
         setGoogleLoading(true);
 
         try {
+            // The chosen account type travels in the callback URL. After
+            // Google returns, /onboarding/role applies it server-side once.
             const { error: authError } = await authClient.signIn.social({
                 provider: "google",
-                callbackURL: "/dashboard",
+                callbackURL: `/onboarding/role?role=${role}`,
             });
 
             if (authError) {
@@ -317,6 +344,53 @@ export default function SignUpForm() {
                                     placeholder="Enter your full name"
                                     className="h-11 w-full rounded-xl border bg-gray-50 pl-10 pr-3 text-sm outline-none transition focus:border-orange-400 focus:bg-white focus:ring-4 focus:ring-orange-100 dark:border-white/10 dark:bg-neutral-950 dark:text-gray-100 dark:placeholder:text-gray-500 dark:focus:bg-neutral-950 dark:focus:ring-orange-500/20"
                                 />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label
+                                htmlFor="avatar"
+                                className="mb-2 block text-sm font-bold"
+                            >
+                                Profile picture{" "}
+                                <span className="font-normal text-muted-foreground">
+                                    (optional)
+                                </span>
+                            </label>
+                            <div className="flex items-center gap-4 rounded-xl border border-dashed bg-gray-50 p-3 dark:border-white/10 dark:bg-neutral-950">
+                                <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-full border bg-white dark:border-white/10 dark:bg-neutral-900">
+                                    {imagePreview ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img
+                                            src={imagePreview}
+                                            alt="Profile preview"
+                                            className="size-full object-cover"
+                                        />
+                                    ) : (
+                                        <ImagePlus className="size-6 text-muted-foreground" />
+                                    )}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <input
+                                        id="avatar"
+                                        type="file"
+                                        accept="image/png,image/jpeg,image/webp,image/gif"
+                                        onChange={(event) => {
+                                            const file =
+                                                event.target.files?.[0] ?? null;
+                                            setImageFile(file);
+                                            setImagePreview(
+                                                file
+                                                    ? URL.createObjectURL(file)
+                                                    : ""
+                                            );
+                                        }}
+                                        className="block w-full cursor-pointer rounded-lg border bg-white text-xs file:mr-3 file:cursor-pointer file:rounded-l-lg file:border-0 file:bg-orange-500 file:px-3 file:py-2.5 file:text-xs file:font-bold file:text-white dark:bg-neutral-900"
+                                    />
+                                    <p className="mt-1.5 text-[11px] text-muted-foreground">
+                                        JPG, PNG, WebP or GIF, max 5MB.
+                                    </p>
+                                </div>
                             </div>
                         </div>
 

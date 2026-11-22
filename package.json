@@ -9,7 +9,8 @@
     "lint": "eslint",
     "set-role": "node --env-file=.env scripts/set-role.mjs",
     "set-admin": "node --env-file=.env scripts/set-admin.mjs",
-    "seed-demo": "node --env-file=.env scripts/seed-demo.mjs"
+    "seed-demo": "node --env-file=.env scripts/seed-demo.mjs",
+    "migrate-schema": "node --env-file=.env scripts/migrate-schema.mjs"
   },
   "dependencies": {
     "better-auth": "^1.7.25",

@@ -13,9 +13,9 @@ import {
 import {
     FaFacebook,
     FaInstagram,
-    FaTwitter,
     FaYoutube,
 } from "react-icons/fa";
+import { FaXTwitter } from "react-icons/fa6";
 
 import { ContactForm } from "@/components/contact/contact-form";
 
@@ -58,7 +58,7 @@ const channels = [
 const socials = [
     { icon: FaFacebook, href: "https://facebook.com", label: "Facebook" },
     { icon: FaInstagram, href: "https://instagram.com", label: "Instagram" },
-    { icon: FaTwitter, href: "https://twitter.com", label: "Twitter" },
+    { icon: FaXTwitter, href: "https://x.com", label: "X" },
     { icon: FaYoutube, href: "https://youtube.com", label: "YouTube" },
 ];
 

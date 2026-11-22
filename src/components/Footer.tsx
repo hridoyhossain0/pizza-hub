@@ -12,9 +12,9 @@ import {
 import {
     FaFacebook,
     FaInstagram,
-    FaTwitter,
     FaYoutube,
 } from "react-icons/fa";
+import { FaXTwitter } from "react-icons/fa6";
 
 
 
@@ -51,9 +51,9 @@ const Footer =  () => {
             label: "Instagram",
         },
         {
-            icon: FaTwitter,
-            href: "https://twitter.com",
-            label: "Twitter",
+            icon: FaXTwitter,
+            href: "https://x.com",
+            label: "X",
         },
         {
             icon: FaYoutube,

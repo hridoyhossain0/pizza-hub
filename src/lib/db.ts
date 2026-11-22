@@ -30,33 +30,33 @@ export function toObjectId(value: string): ObjectId | null {
     return ObjectId.isValid(value) ? new ObjectId(value) : null;
 }
 
+/**
+ * `users` is the Better Auth collection. Vendor business data and the
+ * subscription state live on the same document so the database uses exactly
+ * the four business collections required by the brief.
+ */
 export interface UserDocument {
     _id: EntityId;
     name: string;
     email: string;
     image?: string | null;
     role?: string;
-    blocked?: boolean;
-    createdAt?: Date;
-    updatedAt?: Date;
-}
-
-export interface VendorProfileDocument {
-    _id: ObjectId;
-    userId: EntityId;
-    restaurantName: string;
-    description: string;
-    image: string;
-    area: string;
-    city: string;
-    subscriptionPlan: SubscriptionPlan;
+    isBlocked?: boolean;
+    roleConfigured?: boolean;
+    /** Vendor only. */
+    businessName?: string;
+    businessDescription?: string;
+    businessImage?: string;
+    businessArea?: string;
+    businessCity?: string;
+    subscriptionPlan?: SubscriptionPlan;
     subscriptionStatus?: SubscriptionStatus;
+    subscriptionExpiresAt?: Date | null;
     premiumSince?: Date | null;
-    premiumExpiresAt?: Date | null;
     stripeCustomerId?: string | null;
     lastCheckoutSessionId?: string | null;
-    createdAt: Date;
-    updatedAt: Date;
+    createdAt?: Date;
+    updatedAt?: Date;
 }
 
 export interface MenuItemDocument {
@@ -65,14 +65,13 @@ export interface MenuItemDocument {
     vendorName: string;
     vendorImage?: string;
     vendorLocation?: string;
-    name: string;
+    itemName: string;
     category: string;
     description: string;
     price: number;
     location: string;
-    image: string;
+    images: string[];
     status: MenuStatus;
-    isActive: boolean;
     premium: boolean;
     createdAt: Date;
     updatedAt: Date;
@@ -105,11 +104,12 @@ export interface TransactionDocument {
     plan: SubscriptionPlan;
     amount: number;
     currency?: string;
-    paymentStatus: PaymentStatus;
+    stripeSessionId?: string | null;
+    stripeSubscriptionId?: string | null;
+    stripePaymentIntentId?: string | null;
+    status: PaymentStatus;
     transactionDate: Date;
     createdAt: Date;
-    stripeSessionId?: string | null;
-    stripePaymentIntentId?: string | null;
 }
 
 const uri = process.env.MONGODB_URL;
@@ -135,8 +135,6 @@ export const db = mongoClient.db();
 export const usersCollection: Collection<UserDocument> =
     db.collection("user");
 export const sessionsCollection = db.collection("session");
-export const vendorProfilesCollection: Collection<VendorProfileDocument> =
-    db.collection("vendorProfiles");
 export const menuItemsCollection: Collection<MenuItemDocument> =
     db.collection("menuItems");
 export const ordersCollection: Collection<OrderDocument> =

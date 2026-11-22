@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600" role="img" aria-label="PizzaHub placeholder">
+  <rect width="800" height="600" fill="#fff7ed"/>
+  <circle cx="400" cy="300" r="210" fill="#f59e0b"/>
+  <circle cx="400" cy="300" r="178" fill="#fef3c7"/>
+  <circle cx="320" cy="235" r="34" fill="#dc2626"/>
+  <circle cx="470" cy="225" r="34" fill="#dc2626"/>
+  <circle cx="405" cy="350" r="34" fill="#dc2626"/>
+  <circle cx="520" cy="350" r="28" fill="#16a34a"/>
+  <circle cx="300" cy="355" r="28" fill="#16a34a"/>
+  <text x="400" y="535" text-anchor="middle" fill="#9a3412" font-family="Arial, sans-serif" font-size="38" font-weight="700">PizzaHub</text>
+</svg>

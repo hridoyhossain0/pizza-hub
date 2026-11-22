@@ -15,8 +15,8 @@ interface UploadResponse {
 
 /**
  * Uploads an image through the authenticated Express API and returns the
- * public URL. Images are stored in MongoDB by `pizza-hub-server`, so no
- * third-party image host or API key is required.
+ * public URL. `pizza-hub-server` forwards the file to ImgBB, so only the
+ * hosted URL is stored in MongoDB.
  */
 export async function uploadImage(file: File): Promise<string> {
     if (!file || typeof file === "string" || file.size === 0) {
@@ -81,4 +81,21 @@ export function getImageFile(formData: FormData, field: string): File | null {
     }
 
     return value;
+}
+
+/** Returns every file stored under a repeating FormData field (max `max`). */
+export function getImageFiles(
+    formData: FormData,
+    field: string,
+    max = 5
+): File[] {
+    return formData
+        .getAll(field)
+        .filter((value): value is File => value instanceof File && value.size > 0)
+        .slice(0, max);
+}
+
+/** Uploads several files in parallel and preserves their order. */
+export async function uploadImages(files: File[]): Promise<string[]> {
+    return Promise.all(files.map((file) => uploadImage(file)));
 }

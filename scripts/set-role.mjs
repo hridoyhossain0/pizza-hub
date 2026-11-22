@@ -28,7 +28,8 @@ try {
         {
             $set: {
                 role,
-                blocked: false,
+                roleConfigured: true,
+                isBlocked: false,
                 updatedAt: new Date(),
             },
         }

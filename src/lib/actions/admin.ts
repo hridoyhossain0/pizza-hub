@@ -60,7 +60,7 @@ export async function setUserBlocked(
 
     await usersCollection.updateOne(
         { _id: idFilter(userId) },
-        { $set: { blocked, updatedAt: new Date() } }
+        { $set: { isBlocked: blocked, updatedAt: new Date() } }
     );
 
     if (blocked) {
@@ -90,7 +90,8 @@ export async function setMenuItemStatus(
     if (
         status !== "pending" &&
         status !== "approved" &&
-        status !== "rejected"
+        status !== "rejected" &&
+        status !== "inactive"
     ) {
         return fail("Invalid menu item status.");
     }
@@ -112,10 +113,12 @@ export async function setMenuItemStatus(
 
     return done(
         status === "approved"
-            ? "Menu item approved. It is now visible on the public menu when active."
+            ? "Menu item approved. It is now visible on the public menu."
             : status === "rejected"
               ? "Menu item rejected. It is hidden from customers."
-              : "Menu item moved back to pending review."
+              : status === "inactive"
+                ? "Menu item marked inactive and hidden from customers."
+                : "Menu item moved back to pending review."
     );
 }
 

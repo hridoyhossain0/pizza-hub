@@ -1,12 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { ObjectId } from "mongodb";
 
 import {
     idFilter,
     menuItemsCollection,
-    vendorProfilesCollection,
+    usersCollection,
 } from "@/lib/db";
 import { getImageFile, uploadImage } from "@/lib/upload";
 import type { ActionResult } from "@/lib/types/dashboard";
@@ -34,6 +33,11 @@ function revalidateVendor() {
     revalidatePath("/");
 }
 
+/**
+ * Saves the restaurant profile on the vendor's own `user` document. Only
+ * business fields are accepted, so a crafted request cannot change role,
+ * subscription or blocked state.
+ */
 export async function saveVendorProfile(
     _previous: ActionResult,
     formData: FormData
@@ -67,11 +71,15 @@ export async function saveVendorProfile(
         return fail("City is required (2-60 characters).");
     }
 
-    const existing = await vendorProfilesCollection.findOne({
-        userId: idFilter(user.id),
+    const existing = await usersCollection.findOne({
+        _id: idFilter(user.id),
     });
 
-    let image = existing?.image ?? "";
+    if (!existing) {
+        return fail("Your account could not be found. Please sign in again.");
+    }
+
+    let image = existing.businessImage ?? "";
     const imageFile = getImageFile(formData, "image");
 
     if (imageFile) {
@@ -89,25 +97,19 @@ export async function saveVendorProfile(
     const now = new Date();
     const location = `${area}, ${city}`;
 
-    await vendorProfilesCollection.updateOne(
-        { userId: idFilter(user.id) },
+    await usersCollection.updateOne(
+        { _id: idFilter(user.id) },
         {
             $set: {
-                restaurantName,
-                description,
-                area,
-                city,
-                image,
+                businessName: restaurantName,
+                businessDescription: description,
+                businessArea: area,
+                businessCity: city,
+                businessImage: image,
+                subscriptionPlan: existing.subscriptionPlan ?? "free",
                 updatedAt: now,
             },
-            $setOnInsert: {
-                _id: new ObjectId(),
-                userId: user.id,
-                subscriptionPlan: "free",
-                createdAt: now,
-            },
-        },
-        { upsert: true }
+        }
     );
 
     // Keep the denormalised vendor snapshot on menu items in sync.
@@ -139,22 +141,22 @@ export async function cancelPremium(): Promise<ActionResult> {
         return fail(error);
     }
 
-    const profile = await vendorProfilesCollection.findOne({
-        userId: idFilter(user.id),
+    const vendor = await usersCollection.findOne({
+        _id: idFilter(user.id),
     });
 
-    if (!profile || profile.subscriptionPlan !== "premium") {
+    if (!vendor || vendor.subscriptionPlan !== "premium") {
         return fail("You do not have an active Premium subscription.");
     }
 
-    if (profile.subscriptionStatus === "cancelled") {
+    if (vendor.subscriptionStatus === "cancelled") {
         return done(
             "Premium is already scheduled to end at the close of your paid period."
         );
     }
 
-    await vendorProfilesCollection.updateOne(
-        { userId: idFilter(user.id), subscriptionPlan: "premium" },
+    await usersCollection.updateOne(
+        { _id: idFilter(user.id), subscriptionPlan: "premium" },
         {
             $set: {
                 subscriptionStatus: "cancelled",

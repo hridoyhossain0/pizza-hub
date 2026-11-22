@@ -51,7 +51,8 @@ try {
             {
                 $set: {
                     role: "admin",
-                    blocked: false,
+                    roleConfigured: true,
+                    isBlocked: false,
                     updatedAt: now,
                 },
             }

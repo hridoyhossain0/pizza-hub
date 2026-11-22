@@ -4,14 +4,15 @@ import { revalidatePath } from "next/cache";
 
 import { idFilter, usersCollection } from "@/lib/db";
 import type { ActionResult } from "@/lib/types/dashboard";
+import { ROLE_HOME } from "@/lib/roles";
 import { guard } from "@/lib/actions/guard";
 
 /**
- * Assigns the account type chosen on the sign-up form.
+ * Assigns the account type chosen on the sign-up form (email or Google).
  *
- * Only `customer` and `vendor` are accepted, and an existing vendor/admin
- * role can never be changed through this endpoint. Administrators are
- * created out-of-band (see `scripts/set-role.mjs`).
+ * Only `customer` and `vendor` are accepted. `roleConfigured` makes this a
+ * one-time operation, so a signed-in user can never switch roles later, and
+ * administrators can never be created through this endpoint.
  */
 export async function setInitialRole(
     role: "customer" | "vendor"
@@ -26,7 +27,11 @@ export async function setInitialRole(
         return { ok: false, message: "Invalid account type." };
     }
 
-    if (user.role === "vendor" || user.role === "admin") {
+    if (user.role === "admin") {
+        return { ok: true, message: "Your account role is already configured." };
+    }
+
+    if (user.roleConfigured) {
         return {
             ok: true,
             message: "Your account role is already configured.",
@@ -38,7 +43,8 @@ export async function setInitialRole(
         {
             $set: {
                 role,
-                blocked: false,
+                roleConfigured: true,
+                isBlocked: false,
                 updatedAt: new Date(),
             },
         }
@@ -47,6 +53,10 @@ export async function setInitialRole(
     revalidatePath("/dashboard");
     revalidatePath("/dashboard/customer");
     revalidatePath("/dashboard/vendor");
+    revalidatePath("/", "layout");
 
-    return { ok: true, message: "Account type saved." };
+    return {
+        ok: true,
+        message: `Account type saved. Welcome to your ${ROLE_HOME[role] ? "dashboard" : "account"}.`,
+    };
 }

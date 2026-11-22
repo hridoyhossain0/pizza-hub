@@ -110,6 +110,7 @@ JWT_SECRET=<random string, at least 16 characters>
 JWT_TTL_SECONDS=3600
 GOOGLE_CLIENT_ID=<same Google OAuth client id>
 GOOGLE_CLIENT_SECRET=<same Google OAuth client secret>
+IMGBB_API_KEY=<ImgBB API key>
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 STRIPE_CURRENCY=bdt
@@ -216,7 +217,6 @@ events that the current order model does not record.
 | `POST` | `/api/payments/checkout` | JWT + Vendor role |
 | `POST` | `/api/payments/webhook` | Stripe signature |
 | `POST` | `/api/uploads` | Session upload guard |
-| `GET` | `/api/images/:id` | Public image bytes |
 
 ## UX states and error handling
 
@@ -280,8 +280,8 @@ npm run lint    # ESLint
 
 ## Notes
 
-- Menu and profile images are uploaded through the Express API and stored in
-  MongoDB, then served from `GET /api/images/:id`. No third-party image host is
-  required; set `PUBLIC_API_URL` to the deployed API origin in production.
+- Menu and profile images are uploaded through the Express API to ImgBB. Only
+  the hosted ImgBB URL is stored in MongoDB. Set `IMGBB_API_KEY` on the API
+  server and keep it out of the frontend.
 - Customer orders are paid on delivery; Stripe is used only for vendor Premium
   subscriptions, as required by the assignment.

@@ -46,8 +46,8 @@ export default async function PaymentSuccessPage({
           })
         : null;
 
-    const paid = payment?.paymentStatus === "paid";
-    const stillPending = payment?.paymentStatus === "pending";
+    const paid = payment?.status === "paid";
+    const stillPending = payment?.status === "pending";
     const activationPending = paid && !isPremium;
 
     return (
@@ -136,7 +136,7 @@ export default async function PaymentSuccessPage({
                                     Status:{" "}
                                 </span>
                                 <span className="font-semibold capitalize">
-                                    {payment.paymentStatus}
+                                    {payment.status}
                                 </span>
                             </p>
                         </div>

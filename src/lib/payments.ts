@@ -5,44 +5,52 @@ import { ObjectId } from "mongodb";
 import {
     idFilter,
     menuItemsCollection,
-    vendorProfilesCollection,
-    type VendorProfileDocument,
+    usersCollection,
+    type UserDocument,
 } from "@/lib/db";
-import type { SubscriptionStatus } from "@/lib/types/dashboard";
+import type {
+    SubscriptionPlan,
+    SubscriptionStatus,
+} from "@/lib/types/dashboard";
 
 /**
  * Subscription state helpers.
  *
  * Stripe checkout and payment verification live in the Express API server
- * (`pizza-hub-server`). The frontend only needs to read and lazily apply
- * expiry so an overdue Premium vendor is treated as Free everywhere.
+ * (`pizza-hub-server`). The frontend only reads the subscription fields on the
+ * vendor's user document and lazily applies expiry so an overdue Premium
+ * vendor is treated as Free everywhere.
  */
 
 export function subscriptionStatusOf(
-    profile: VendorProfileDocument | null
+    user: UserDocument | null
 ): SubscriptionStatus {
-    if (!profile || profile.subscriptionPlan !== "premium") {
-        return profile?.subscriptionStatus === "cancelled"
+    if (!user || user.subscriptionPlan !== "premium") {
+        return user?.subscriptionStatus === "cancelled"
             ? "cancelled"
             : "expired";
     }
 
     if (
-        profile.premiumExpiresAt &&
-        profile.premiumExpiresAt.getTime() <= Date.now()
+        user.subscriptionExpiresAt &&
+        user.subscriptionExpiresAt.getTime() <= Date.now()
     ) {
         return "expired";
     }
 
-    return profile.subscriptionStatus === "cancelled"
+    return user.subscriptionStatus === "cancelled"
         ? "cancelled"
         : "active";
 }
 
-function isExpired(profile: VendorProfileDocument, now: Date): boolean {
+export function planOf(user: UserDocument | null): SubscriptionPlan {
+    return user?.subscriptionPlan === "premium" ? "premium" : "free";
+}
+
+function isExpired(user: UserDocument, now: Date): boolean {
     return Boolean(
-        profile.premiumExpiresAt &&
-            profile.premiumExpiresAt.getTime() <= now.getTime()
+        user.subscriptionExpiresAt &&
+            user.subscriptionExpiresAt.getTime() <= now.getTime()
     );
 }
 
@@ -50,26 +58,26 @@ function isExpired(profile: VendorProfileDocument, now: Date): boolean {
 export async function expireVendorSubscription(
     userId: string,
     now = new Date()
-): Promise<VendorProfileDocument | null> {
-    const profile = await vendorProfilesCollection.findOne({
-        userId: idFilter(userId),
+): Promise<UserDocument | null> {
+    const user = await usersCollection.findOne({
+        _id: idFilter(userId),
     });
 
-    if (!profile) {
+    if (!user) {
         return null;
     }
 
-    if (profile.subscriptionPlan !== "premium" || !isExpired(profile, now)) {
-        return profile;
+    if (user.subscriptionPlan !== "premium" || !isExpired(user, now)) {
+        return user;
     }
 
-    await vendorProfilesCollection.updateOne(
-        { userId: idFilter(userId), subscriptionPlan: "premium" },
+    await usersCollection.updateOne(
+        { _id: idFilter(userId), subscriptionPlan: "premium" },
         {
             $set: {
                 subscriptionPlan: "free",
                 subscriptionStatus: "expired",
-                premiumExpiresAt: null,
+                subscriptionExpiresAt: null,
                 updatedAt: now,
             },
         }
@@ -81,10 +89,10 @@ export async function expireVendorSubscription(
     );
 
     return {
-        ...profile,
+        ...user,
         subscriptionPlan: "free",
         subscriptionStatus: "expired",
-        premiumExpiresAt: null,
+        subscriptionExpiresAt: null,
         updatedAt: now,
     };
 }
@@ -94,13 +102,13 @@ export async function expireVendorSubscription(
  * keep the Premium badge or featured placement after their period ends.
  */
 export async function expireDueSubscriptions(now = new Date()) {
-    const due = await vendorProfilesCollection
+    const due = await usersCollection
         .find(
             {
                 subscriptionPlan: "premium",
-                premiumExpiresAt: { $lte: now },
+                subscriptionExpiresAt: { $lte: now },
             },
-            { projection: { userId: 1 } }
+            { projection: { _id: 1 } }
         )
         .toArray();
 
@@ -108,10 +116,10 @@ export async function expireDueSubscriptions(now = new Date()) {
         return;
     }
 
-    // `userId` may be stored as a string (app writes) or an ObjectId (Better
+    // `_id` may be stored as a string (app writes) or an ObjectId (Better
     // Auth writes), so include both forms in the bulk filters.
-    const vendorIds = due.flatMap((profile) => {
-        const value = profile.userId;
+    const vendorIds = due.flatMap((user) => {
+        const value = user._id;
 
         if (typeof value === "string") {
             return ObjectId.isValid(value)
@@ -122,17 +130,17 @@ export async function expireDueSubscriptions(now = new Date()) {
         return [value, value.toString()];
     });
 
-    await vendorProfilesCollection.updateMany(
+    await usersCollection.updateMany(
         {
-            userId: { $in: vendorIds },
+            _id: { $in: vendorIds },
             subscriptionPlan: "premium",
-            premiumExpiresAt: { $lte: now },
+            subscriptionExpiresAt: { $lte: now },
         },
         {
             $set: {
                 subscriptionPlan: "free",
                 subscriptionStatus: "expired",
-                premiumExpiresAt: null,
+                subscriptionExpiresAt: null,
                 updatedAt: now,
             },
         }

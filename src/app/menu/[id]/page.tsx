@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import ItemDetails from "@/components/Menu/ItemDetails";
 import { getPublicMenuItem } from "@/lib/data";
-import { getCurrentUser } from "@/lib/getCurrentUser";
+import { getSessionUser } from "@/lib/session";
 
 export const instant = false;
 
@@ -31,21 +31,38 @@ export default async function MenuItemPage({
     params: Promise<{ id: string }>;
 }) {
     const { id } = await params;
-    const [item, currentUser] = await Promise.all([
-        getPublicMenuItem(id),
-        getCurrentUser(),
-    ]);
+
+    // Item details are a private route: guests are sent to sign in first and
+    // returned to this item afterwards. Blocked accounts cannot continue.
+    const user = await getSessionUser();
+
+    if (!user) {
+        redirect(`/sign-in?callbackUrl=${encodeURIComponent(`/menu/${id}`)}`);
+    }
+
+    if (user.blocked) {
+        redirect("/blocked");
+    }
+
+    const item = await getPublicMenuItem(id);
 
     if (!item) {
         notFound();
     }
+
+    const images =
+        item.images.length > 0
+            ? item.images
+            : item.image
+              ? [item.image]
+              : [];
 
     return (
         <ItemDetails
             item={{
                 _id: item._id,
                 name: item.name,
-                images: [item.image],
+                images,
                 category: item.category,
                 description: item.description,
                 price: item.price,
@@ -60,14 +77,10 @@ export default async function MenuItemPage({
                     premium: item.premium,
                 },
             }}
-            currentUser={
-                currentUser
-                    ? {
-                          _id: currentUser._id,
-                          role: currentUser.role,
-                      }
-                    : null
-            }
+            currentUser={{
+                _id: user.id,
+                role: user.role,
+            }}
         />
     );
 }

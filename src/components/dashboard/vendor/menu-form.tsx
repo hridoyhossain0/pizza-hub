@@ -18,6 +18,7 @@ import {
     MENU_CATEGORIES,
     type MenuStatus,
 } from "@/lib/types/dashboard";
+import Image from "next/image";
 
 interface MenuFormValues {
     _id: string;
@@ -26,7 +27,7 @@ interface MenuFormValues {
     description: string;
     price: number;
     location: string;
-    image: string;
+    images: string[];
     status: MenuStatus;
 }
 
@@ -37,7 +38,7 @@ interface MenuFormProps {
 
 export function MenuItemForm({ mode, item }: MenuFormProps) {
     const formRef = useRef<HTMLFormElement>(null);
-    const [preview, setPreview] = useState(item?.image ?? "");
+    const [previews, setPreviews] = useState<string[]>(item?.images ?? []);
     const [state, formAction] = useActionState(
         mode === "create" ? createMenuItem : updateMenuItem,
         EMPTY_ACTION
@@ -172,10 +173,10 @@ export function MenuItemForm({ mode, item }: MenuFormProps) {
 
                 <div className="md:col-span-2">
                     <label
-                        htmlFor="image"
+                        htmlFor="images"
                         className="mb-2 block text-sm font-bold"
                     >
-                        Item image{" "}
+                        Item images{" "}
                         {mode === "create" ? (
                             <span className="text-red-500">*</span>
                         ) : (
@@ -185,40 +186,61 @@ export function MenuItemForm({ mode, item }: MenuFormProps) {
                         )}
                     </label>
 
-                    <div className="flex flex-col gap-4 rounded-xl border border-dashed bg-muted/30 p-4 sm:flex-row sm:items-center">
-                        <div className="flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-xl border bg-background">
-                            {preview ? (
-                                <img
-                                    src={preview}
-                                    alt="Menu item preview"
-                                    className="size-full object-cover"
-                                />
+                    <div className="flex flex-col gap-4 rounded-xl border border-dashed bg-muted/30 p-4">
+                        <div className="flex flex-wrap gap-3">
+                            {previews.length > 0 ? (
+                                previews.map((src, index) => (
+                                    <div
+                                        key={`${src}-${index}`}
+                                        className="relative size-24 overflow-hidden rounded-xl border bg-background"
+                                    >
+                                        <Image
+                                            src={src}
+                                            alt={`Menu item preview ${index + 1}`}
+                                            fill
+                                            sizes="96px"
+                                            className="object-cover"
+                                        />
+                                        {index === 0 ? (
+                                            <span className="absolute inset-x-0 bottom-0 bg-orange-500/90 py-1 text-center text-[10px] font-bold text-white">
+                                                Cover
+                                            </span>
+                                        ) : null}
+                                    </div>
+                                ))
                             ) : (
-                                <ImagePlus className="size-7 text-muted-foreground" />
+                                <div className="flex size-24 items-center justify-center rounded-xl border bg-background">
+                                    <ImagePlus className="size-7 text-muted-foreground" />
+                                </div>
                             )}
                         </div>
 
                         <div className="min-w-0 flex-1">
                             <input
-                                id="image"
-                                name="image"
+                                id="images"
+                                name="images"
                                 type="file"
                                 accept="image/png,image/jpeg,image/webp,image/gif"
+                                multiple
                                 required={mode === "create"}
                                 onChange={(event) => {
-                                    const file =
-                                        event.target.files?.[0];
-                                    if (file) {
-                                        setPreview(
+                                    const files = Array.from(
+                                        event.target.files ?? []
+                                    ).slice(0, 5);
+
+                                    setPreviews(
+                                        files.map((file) =>
                                             URL.createObjectURL(file)
-                                        );
-                                    }
+                                        )
+                                    );
                                 }}
                                 className="block w-full cursor-pointer rounded-lg border bg-background text-xs file:mr-3 file:cursor-pointer file:rounded-l-lg file:border-0 file:bg-orange-500 file:px-3 file:py-2.5 file:text-xs file:font-bold file:text-white"
                             />
                             <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
                                 <Upload className="size-3.5" />
-                                JPG, PNG, WebP or GIF, max 5MB.
+                                Upload up to 5 images (JPG, PNG, WebP or GIF,
+                                max 5MB each). The first image is the cover and
+                                every image is hosted on ImgBB.
                             </p>
                         </div>
                     </div>

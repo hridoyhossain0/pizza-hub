@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { MotionReveal } from "@/components/HomePage/MotionReveal";
+import type { MenuStatus } from "@/lib/types/dashboard";
 
 export interface MenuItem {
     _id: string;
@@ -20,7 +21,7 @@ export interface MenuItem {
         name: string;
         image?: string;
     };
-    status: "pending" | "approved" | "rejected";
+    status: MenuStatus;
     isActive: boolean;
     premium?: boolean;
 }
@@ -76,13 +77,15 @@ const FeaturedMenu = ({ items }: FeaturedMenuProps) => {
                             <MotionReveal
                                 key={item._id}
                                 delay={index * 0.06}
+                                className="h-full"
                             >
-                                <div className="group overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition duration-300 hover:-translate-y-2 hover:shadow-xl dark:border-white/10 dark:bg-neutral-900">
+                                <div className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition duration-300 hover:-translate-y-2 hover:shadow-xl dark:border-white/10 dark:bg-neutral-900">
                                 {/* Image */}
                                 <div className="relative h-56 overflow-hidden bg-gray-100 dark:bg-neutral-800">
                                     <Image
+                                      
                                         src={item.image}
-                                        alt={item.name}
+                                        alt={item.name ||  "Featured pizza"}
                                         fill
                                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                                         className="object-cover transition duration-500 group-hover:scale-110"
@@ -99,12 +102,12 @@ const FeaturedMenu = ({ items }: FeaturedMenuProps) => {
                                     ) : null}
 
                                     <div className="absolute bottom-4 right-4 rounded-xl bg-orange-500 px-4 py-2 text-lg font-extrabold text-white shadow-lg">
-                                        ৳{item.price}
+                                        ৳{item.price.toLocaleString("en-BD")}
                                     </div>
                                 </div>
 
                                 {/* Card Content */}
-                                <div className="p-5">
+                                <div className="flex flex-1 flex-col p-5">
 
                                     <h3 className="line-clamp-1 text-xl font-bold text-gray-900 transition group-hover:text-orange-600 dark:text-white dark:group-hover:text-orange-400">
                                         {item.name}
@@ -117,7 +120,7 @@ const FeaturedMenu = ({ items }: FeaturedMenuProps) => {
                                     </div>
 
                                     {/* Vendor Info */}
-                                    <div className="mt-5 flex items-center justify-between border-t border-gray-100 pt-4 dark:border-white/10">
+                                    <div className="mt-auto flex items-center justify-between border-t border-gray-100 pt-4 dark:border-white/10">
                                         <div className="flex min-w-0 items-center gap-2">
                                             {item.vendor.image ? (
                                                 <Image

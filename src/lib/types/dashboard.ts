@@ -2,7 +2,7 @@ import type { UserRole } from "@/lib/roles";
 
 export type SubscriptionPlan = "free" | "premium";
 export type SubscriptionStatus = "active" | "cancelled" | "expired";
-export type MenuStatus = "pending" | "approved" | "rejected";
+export type MenuStatus = "pending" | "approved" | "rejected" | "inactive";
 export type OrderStatus = "pending" | "accepted" | "rejected" | "cancelled";
 export type PaymentStatus = "paid" | "pending" | "failed";
 
@@ -13,6 +13,7 @@ export interface ActionResult {
 
 export const EMPTY_ACTION: ActionResult = { ok: false, message: "" };
 
+/** Vendor profile sourced from the Better Auth `user` document. */
 export interface VendorProfileView {
     _id: string;
     userId: string;
@@ -40,7 +41,9 @@ export interface MenuItemView {
     description: string;
     price: number;
     location: string;
+    /** Cover image (first entry of `images`). */
     image: string;
+    images: string[];
     status: MenuStatus;
     isActive: boolean;
     premium: boolean;
@@ -78,6 +81,7 @@ export interface TransactionView {
     paymentStatus: PaymentStatus;
     transactionDate: Date;
     stripeSessionId?: string | null;
+    stripeSubscriptionId?: string | null;
 }
 
 export interface SubscriptionView {
@@ -94,7 +98,19 @@ export interface UserView {
     image: string | null;
     role: UserRole;
     blocked: boolean;
+    businessName?: string;
+    subscriptionPlan: SubscriptionPlan;
     createdAt: Date;
+}
+
+export interface UserDetailView extends UserView {
+    businessDescription?: string;
+    businessArea?: string;
+    businessCity?: string;
+    subscriptionStatus?: SubscriptionStatus;
+    subscriptionExpiresAt?: Date | null;
+    itemCount: number;
+    orderCount: number;
 }
 
 export interface VendorStats {
@@ -122,19 +138,22 @@ export interface AdminStats {
     totalTransactions: number;
 }
 
+/**
+ * The six categories required by the storefront. They are stored verbatim on
+ * `menuItems.category`, so a category card can deep-link with `?category=`.
+ */
 export const MENU_CATEGORIES = [
-    "Pizza",
-    "Special Pizza",
-    "Burger",
-    "Pasta",
-    "Sandwich",
-    "Rice & Curry",
-    "Sides",
-    "Dessert",
-    "Drinks",
-    "Other",
+    "Classic Pizzas",
+    "Vegetarian Pizzas",
+    "Meat Lovers",
+    "Specialty / Gourmet Pizzas",
+    "Sides & Appetizers",
+    "Beverages & Desserts",
 ] as const;
+
+export type MenuCategory = (typeof MENU_CATEGORIES)[number];
 
 export const PREMIUM_PRICE = 499;
 export const PREMIUM_PERIOD_DAYS = 30;
 export const FREE_ACTIVE_ITEM_LIMIT = 3;
+export const MAX_ITEM_IMAGES = 5;

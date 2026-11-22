@@ -175,6 +175,7 @@ export default async function VendorMenuPage() {
                                                 </Button>
                                                 <MenuRowActions
                                                     itemId={item._id}
+                                                    itemName={item.name}
                                                     isActive={item.isActive}
                                                 />
                                             </div>

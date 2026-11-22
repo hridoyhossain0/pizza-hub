@@ -52,7 +52,7 @@ export default async function EditMenuItemPage({
                             description: item.description,
                             price: item.price,
                             location: item.location,
-                            image: item.image,
+                            images: item.images,
                             status: item.status,
                         }}
                     />

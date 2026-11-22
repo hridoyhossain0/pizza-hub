@@ -51,6 +51,7 @@ const nextConfig: NextConfig = {
   // Menu and profile images travel through a base64 server action, so allow
   // larger action bodies than the 1MB default. The API enforces the 5MB cap.
   experimental: {
+   
     serverActions: {
       bodySizeLimit: "8mb",
     },

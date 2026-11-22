@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Loader2, Power, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
     deleteMenuItem,
     setMenuItemAvailability,
@@ -14,16 +15,22 @@ import type { ActionResult } from "@/lib/types/dashboard";
 
 export function MenuRowActions({
     itemId,
+    itemName,
     isActive,
 }: {
     itemId: string;
+    itemName: string;
     isActive: boolean;
 }) {
     const router = useRouter();
     const [pending, startTransition] = useTransition();
     const [result, setResult] = useState<ActionResult | null>(null);
+    const [confirmOpen, setConfirmOpen] = useState(false);
 
-    const run = (action: () => Promise<ActionResult>) => {
+    const run = (
+        action: () => Promise<ActionResult>,
+        onSuccess?: () => void
+    ) => {
         setResult(null);
         startTransition(async () => {
             const response = await action();
@@ -33,6 +40,7 @@ export function MenuRowActions({
                 errorTitle: "Could not update menu item",
             });
             if (response.ok) {
+                onSuccess?.();
                 router.refresh();
             }
         });
@@ -63,17 +71,7 @@ export function MenuRowActions({
                     variant="destructive"
                     size="sm"
                     disabled={pending}
-                    onClick={() => {
-                        if (
-                            !window.confirm(
-                                "Delete this menu item? This cannot be undone."
-                            )
-                        ) {
-                            return;
-                        }
-
-                        run(() => deleteMenuItem(itemId));
-                    }}
+                    onClick={() => setConfirmOpen(true)}
                 >
                     <Trash2 aria-hidden="true" />
                     Delete
@@ -91,6 +89,21 @@ export function MenuRowActions({
                     {result.message}
                 </p>
             ) : null}
+
+            <ConfirmDialog
+                open={confirmOpen}
+                onOpenChange={setConfirmOpen}
+                title="Delete this menu item?"
+                description={`"${itemName}" will be removed permanently. This cannot be undone.`}
+                confirmLabel="Delete item"
+                destructive
+                pending={pending}
+                onConfirm={() =>
+                    run(() => deleteMenuItem(itemId), () =>
+                        setConfirmOpen(false)
+                    )
+                }
+            />
         </div>
     );
 }

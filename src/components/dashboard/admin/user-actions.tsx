@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Loader2, ShieldBan, ShieldCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { setUserBlocked } from "@/lib/actions/admin";
 import { notifyResult } from "@/lib/toast";
 import type { ActionResult } from "@/lib/types/dashboard";
@@ -23,6 +24,7 @@ export function AdminUserActions({
     const router = useRouter();
     const [pending, startTransition] = useTransition();
     const [result, setResult] = useState<ActionResult | null>(null);
+    const [confirmOpen, setConfirmOpen] = useState(false);
 
     if (role === "admin") {
         return (
@@ -32,6 +34,22 @@ export function AdminUserActions({
         );
     }
 
+    const run = () => {
+        setResult(null);
+        startTransition(async () => {
+            const response = await setUserBlocked(userId, !blocked);
+            setResult(response);
+            notifyResult(response, {
+                successTitle: "User updated",
+                errorTitle: "Could not update user",
+            });
+            if (response.ok) {
+                setConfirmOpen(false);
+                router.refresh();
+            }
+        });
+    };
+
     return (
         <div className="flex flex-col items-end gap-2">
             <Button
@@ -39,33 +57,7 @@ export function AdminUserActions({
                 size="sm"
                 variant={blocked ? "outline" : "destructive"}
                 disabled={pending}
-                onClick={() => {
-                    if (
-                        !window.confirm(
-                            blocked
-                                ? `Unblock ${userName}? They will be able to sign in and use protected features again.`
-                                : `Block ${userName}? Their active sessions will be signed out immediately.`
-                        )
-                    ) {
-                        return;
-                    }
-
-                    setResult(null);
-                    startTransition(async () => {
-                        const response = await setUserBlocked(
-                            userId,
-                            !blocked
-                        );
-                        setResult(response);
-                        notifyResult(response, {
-                            successTitle: "User updated",
-                            errorTitle: "Could not update user",
-                        });
-                        if (response.ok) {
-                            router.refresh();
-                        }
-                    });
-                }}
+                onClick={() => setConfirmOpen(true)}
             >
                 {pending ? (
                     <Loader2 className="animate-spin" aria-hidden="true" />
@@ -88,6 +80,21 @@ export function AdminUserActions({
                     {result.message}
                 </p>
             ) : null}
+
+            <ConfirmDialog
+                open={confirmOpen}
+                onOpenChange={setConfirmOpen}
+                title={blocked ? "Unblock this user?" : "Block this user?"}
+                description={
+                    blocked
+                        ? `${userName} will be able to sign in and use protected features again.`
+                        : `${userName} will immediately lose access to protected features and all active sessions will be signed out.`
+                }
+                confirmLabel={blocked ? "Unblock user" : "Block user"}
+                destructive={!blocked}
+                pending={pending}
+                onConfirm={run}
+            />
         </div>
     );
 }

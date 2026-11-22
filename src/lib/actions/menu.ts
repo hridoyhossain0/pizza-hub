@@ -8,9 +8,14 @@ import {
     menuItemsCollection,
     type MenuItemDocument,
 } from "@/lib/db";
-import { getImageFile, uploadImage } from "@/lib/upload";
+import { getImageFiles, uploadImages } from "@/lib/upload";
 import { expireVendorSubscription } from "@/lib/payments";
-import type { ActionResult } from "@/lib/types/dashboard";
+import {
+    FREE_ACTIVE_ITEM_LIMIT,
+    MENU_CATEGORIES,
+    MAX_ITEM_IMAGES,
+    type ActionResult,
+} from "@/lib/types/dashboard";
 import { guard } from "@/lib/actions/guard";
 
 function text(formData: FormData, key: string) {
@@ -42,7 +47,7 @@ function parseMenuFields(
     | {
           ok: true;
           data: {
-              name: string;
+              itemName: string;
               category: string;
               description: string;
               location: string;
@@ -62,8 +67,8 @@ function parseMenuFields(
         };
     }
 
-    if (!category) {
-        return { ok: false, error: "Please choose a category." };
+    if (!(MENU_CATEGORIES as readonly string[]).includes(category)) {
+        return { ok: false, error: "Please choose one of the six categories." };
     }
 
     if (description.length < 10 || description.length > 1000) {
@@ -90,7 +95,7 @@ function parseMenuFields(
     return {
         ok: true,
         data: {
-            name,
+            itemName: name,
             category,
             description,
             location,
@@ -99,11 +104,22 @@ function parseMenuFields(
     };
 }
 
+async function imageUrlsFrom(formData: FormData): Promise<string[]> {
+    const files = getImageFiles(formData, "images", MAX_ITEM_IMAGES);
+
+    if (files.length === 0) {
+        return [];
+    }
+
+    return uploadImages(files);
+}
+
 async function countActiveItems(vendorId: string, excludeId?: ObjectId) {
+    // "Active" = published or awaiting review; rejected/inactive items do not
+    // consume a Free-plan slot.
     const filter: Filter<MenuItemDocument> = {
         vendorId: idFilter(vendorId),
-        isActive: true,
-        status: { $ne: "rejected" },
+        status: { $in: ["pending", "approved"] },
     };
 
     if (excludeId) {
@@ -129,35 +145,33 @@ export async function createMenuItem(
         return fail(parsed.error);
     }
 
-    const image = getImageFile(formData, "image");
-
-    if (!image) {
-        return fail("Please upload an image for this menu item.");
+    if (getImageFiles(formData, "images", MAX_ITEM_IMAGES).length === 0) {
+        return fail("Please upload at least one image for this menu item.");
     }
 
     // Lazy expiry ensures an overdue Premium subscription is treated as Free.
-    const profile = await expireVendorSubscription(user.id);
+    const vendor = await expireVendorSubscription(user.id);
 
-    if (!profile) {
+    if (!vendor?.businessName) {
         return fail(
             "Create your restaurant profile before adding menu items."
         );
     }
 
-    if (profile.subscriptionPlan !== "premium") {
+    if (vendor.subscriptionPlan !== "premium") {
         const activeItems = await countActiveItems(user.id);
 
-        if (activeItems >= 3) {
+        if (activeItems >= FREE_ACTIVE_ITEM_LIMIT) {
             return fail(
-                "Your Free plan allows a maximum of 3 active menu items. Upgrade to Premium for unlimited items."
+                `Your Free plan allows a maximum of ${FREE_ACTIVE_ITEM_LIMIT} active menu items. Upgrade to Premium for unlimited items.`
             );
         }
     }
 
-    let imageUrl: string;
+    let images: string[];
 
     try {
-        imageUrl = await uploadImage(image);
+        images = await imageUrlsFrom(formData);
     } catch (uploadError) {
         return fail(
             uploadError instanceof Error
@@ -167,18 +181,20 @@ export async function createMenuItem(
     }
 
     const now = new Date();
+    const location = `${vendor.businessArea ?? ""}, ${
+        vendor.businessCity ?? ""
+    }`.replace(/^, |, $/g, "");
 
     await menuItemsCollection.insertOne({
         _id: new ObjectId(),
         vendorId: user.id,
-        vendorName: profile.restaurantName,
-        vendorImage: profile.image || undefined,
-        vendorLocation: `${profile.area}, ${profile.city}`,
+        vendorName: vendor.businessName,
+        vendorImage: vendor.businessImage || undefined,
+        vendorLocation: location || parsed.data.location,
         ...parsed.data,
-        image: imageUrl,
+        images,
         status: "pending",
-        isActive: true,
-        premium: profile.subscriptionPlan === "premium",
+        premium: vendor.subscriptionPlan === "premium",
         createdAt: now,
         updatedAt: now,
     });
@@ -221,12 +237,11 @@ export async function updateMenuItem(
         return fail(parsed.error);
     }
 
-    let imageUrl = existing.image;
-    const image = getImageFile(formData, "image");
+    let images = existing.images ?? [];
 
-    if (image) {
+    if (getImageFiles(formData, "images", MAX_ITEM_IMAGES).length > 0) {
         try {
-            imageUrl = await uploadImage(image);
+            images = await imageUrlsFrom(formData);
         } catch (uploadError) {
             return fail(
                 uploadError instanceof Error
@@ -236,20 +251,23 @@ export async function updateMenuItem(
         }
     }
 
-    const profile = await expireVendorSubscription(user.id);
+    const vendor = await expireVendorSubscription(user.id);
 
     await menuItemsCollection.updateOne(
         { _id: existing._id, vendorId: idFilter(user.id) },
         {
             $set: {
                 ...parsed.data,
-                image: imageUrl,
-                vendorName: profile?.restaurantName ?? existing.vendorName,
-                vendorImage: profile?.image || existing.vendorImage,
-                vendorLocation: profile
-                    ? `${profile.area}, ${profile.city}`
+                images,
+                vendorName: vendor?.businessName ?? existing.vendorName,
+                vendorImage:
+                    vendor?.businessImage || existing.vendorImage,
+                vendorLocation: vendor
+                    ? `${vendor.businessArea ?? ""}, ${
+                          vendor.businessCity ?? ""
+                      }`.replace(/^, |, $/g, "") || existing.vendorLocation
                     : existing.vendorLocation,
-                premium: profile?.subscriptionPlan === "premium",
+                premium: vendor?.subscriptionPlan === "premium",
                 updatedAt: new Date(),
             },
         }
@@ -287,6 +305,11 @@ export async function deleteMenuItem(
     return done("Menu item deleted.");
 }
 
+/**
+ * Toggles availability by moving an approved item between `approved` and
+ * `inactive`. Items still awaiting review (or rejected) cannot be published by
+ * the vendor — only an admin approval can do that.
+ */
 export async function setMenuItemAvailability(
     itemId: string,
     isActive: boolean
@@ -310,15 +333,25 @@ export async function setMenuItemAvailability(
         return fail("Menu item not found or you do not have access to it.");
     }
 
-    if (isActive && item.status !== "rejected") {
-        const plan = await expireVendorSubscription(user.id);
+    if (item.status === "rejected") {
+        return fail("A rejected item cannot be made available.");
+    }
 
-        if (plan?.subscriptionPlan !== "premium") {
+    if (isActive && item.status === "pending") {
+        return fail(
+            "This item is still awaiting admin approval and cannot be published yet."
+        );
+    }
+
+    if (isActive && item.status !== "approved") {
+        const vendor = await expireVendorSubscription(user.id);
+
+        if (vendor?.subscriptionPlan !== "premium") {
             const activeItems = await countActiveItems(user.id, item._id);
 
-            if (activeItems >= 3) {
+            if (activeItems >= FREE_ACTIVE_ITEM_LIMIT) {
                 return fail(
-                    "Your Free plan allows a maximum of 3 active menu items. Upgrade to Premium to activate more."
+                    `Your Free plan allows a maximum of ${FREE_ACTIVE_ITEM_LIMIT} active menu items. Upgrade to Premium to activate more.`
                 );
             }
         }
@@ -326,7 +359,12 @@ export async function setMenuItemAvailability(
 
     await menuItemsCollection.updateOne(
         { _id: item._id, vendorId: idFilter(user.id) },
-        { $set: { isActive, updatedAt: new Date() } }
+        {
+            $set: {
+                status: isActive ? "approved" : "inactive",
+                updatedAt: new Date(),
+            },
+        }
     );
 
     revalidateMenus();

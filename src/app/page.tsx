@@ -3,13 +3,16 @@ import FeaturedMenu from "@/components/HomePage/FeaturedMenu";
 import HowItWorks from "@/components/HomePage/HowItWorks";
 import PizzaCategories from "@/components/HomePage/PizzaCategories";
 import WhyChooseUs from "@/components/HomePage/WhyChooseUs";
-import { getFeaturedMenuItems } from "@/lib/data";
+import { getCategoryCounts, getFeaturedMenuItems } from "@/lib/data";
 
 // Featured items come from the database on every request.
 export const instant = false;
 
 export default async function Home() {
-    const featured = await getFeaturedMenuItems(6);
+    const [featured, counts] = await Promise.all([
+        getFeaturedMenuItems(6),
+        getCategoryCounts(),
+    ]);
 
     const items = featured.map((item) => ({
         _id: item._id,
@@ -31,9 +34,8 @@ export default async function Home() {
         <div>
             <Banner />
             <FeaturedMenu items={items} />
-            <PizzaCategories />
+            <PizzaCategories counts={counts} />
             <WhyChooseUs />
-
             <HowItWorks />
         </div>
     );

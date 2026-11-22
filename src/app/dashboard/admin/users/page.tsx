@@ -146,9 +146,12 @@ export default async function AdminUsersPage({
                                                     </span>
                                                 )}
                                                 <div className="min-w-0">
-                                                    <p className="truncate font-semibold">
+                                                    <Link
+                                                        href={`/dashboard/admin/users/${user._id}`}
+                                                        className="block truncate font-semibold hover:text-orange-600"
+                                                    >
                                                         {user.name}
-                                                    </p>
+                                                    </Link>
                                                     <p className="truncate text-xs text-muted-foreground">
                                                         {user.email}
                                                     </p>

@@ -9,12 +9,19 @@ import type { ActionResult } from "@/lib/types/dashboard";
 
 const PROTECTED_FIELDS = [
     "role",
+    "roleConfigured",
     "blocked",
+    "isBlocked",
     "email",
+    "businessName",
+    "businessDescription",
+    "businessArea",
+    "businessCity",
+    "businessImage",
     "subscriptionPlan",
     "subscriptionStatus",
+    "subscriptionExpiresAt",
     "premiumSince",
-    "premiumExpiresAt",
 ] as const;
 
 function text(formData: FormData, key: string) {

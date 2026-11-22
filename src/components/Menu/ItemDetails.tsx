@@ -10,7 +10,6 @@ import {
     ArrowRight,
     CalendarDays,
     CheckCircle2,
-    CreditCard,
     MapPin,
     Store,
     ShoppingBag,
@@ -33,7 +32,7 @@ export interface MenuDetails {
     description: string;
     price: number;
     location: string;
-    status: "pending" | "approved" | "rejected";
+    status: "pending" | "approved" | "rejected" | "inactive";
     isActive: boolean;
     vendor: {
         _id: string;
@@ -202,7 +201,7 @@ export default function ItemDetails({
 
                             <div className="relative h-[280px] overflow-hidden rounded-2xl bg-gray-100 dark:bg-neutral-800 sm:h-[420px] lg:h-[490px]">
                                 <img
-                                    src={item.images[selectedImage] || "/placeholder-pizza.jpg"}
+                                    src={item.images[selectedImage] || "/placeholder-pizza.svg"}
                                     alt={item.name}
                                     className="h-full w-full object-cover"
                                 />
@@ -580,19 +579,11 @@ export default function ItemDetails({
                                                 : "Place order"}
                                         </button>
 
-                                        <button
-                                            type="button"
-                                            disabled={ordering}
-                                            onClick={() =>
-                                                setMessage(
-                                                    "Online card payment is not enabled yet. Your order will be paid directly to the restaurant on delivery."
-                                                )
-                                            }
-                                            className="flex w-full items-center justify-center gap-2 rounded-xl border border-orange-200 bg-white px-5 py-3 text-sm font-bold text-orange-600 dark:border-orange-500/30 dark:bg-neutral-950 dark:text-orange-400 dark:hover:bg-orange-500/10 transition hover:bg-orange-50 disabled:cursor-not-allowed disabled:opacity-60"
-                                        >
-                                            <CreditCard size={18} />
-                                            Pay with card
-                                        </button>
+                                        <div className="rounded-xl border border-orange-100 bg-white px-4 py-3 text-center text-xs text-gray-500 dark:border-orange-500/20 dark:bg-neutral-950 dark:text-gray-400">
+                                            No online payment needed — pay the
+                                            restaurant when your order is
+                                            delivered.
+                                        </div>
 
                                         <p className="text-center text-[11px] text-gray-400 dark:text-gray-500">
                                             The restaurant reviews every order.

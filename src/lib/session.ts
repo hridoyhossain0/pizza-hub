@@ -12,6 +12,7 @@ export interface SessionUser {
     image: string | null;
     role: UserRole;
     blocked: boolean;
+    roleConfigured: boolean;
     createdAt: Date;
 }
 
@@ -43,7 +44,9 @@ export const getSessionUser = cache(
         const role = normalizeUserRole(
             (user as { role?: unknown }).role
         );
-        const blocked = (user as { blocked?: unknown }).blocked === true;
+        const blocked = (user as { isBlocked?: unknown }).isBlocked === true;
+        const roleConfigured =
+            (user as { roleConfigured?: unknown }).roleConfigured === true;
 
         return {
             id: user.id,
@@ -52,6 +55,7 @@ export const getSessionUser = cache(
             image: user.image ?? null,
             role,
             blocked,
+            roleConfigured,
             createdAt: user.createdAt,
         };
     }

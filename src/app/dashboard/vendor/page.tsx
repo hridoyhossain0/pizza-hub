@@ -58,6 +58,7 @@ export default async function VendorOverviewPage() {
         pending: 0,
         approved: 0,
         rejected: 0,
+        inactive: 0,
     };
 
     for (const order of orders) {

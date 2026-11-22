@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Check, Eye, Loader2, Trash2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
     adminDeleteMenuItem,
     setMenuItemStatus,
@@ -27,8 +28,12 @@ export function AdminMenuActions({
     const router = useRouter();
     const [pending, startTransition] = useTransition();
     const [result, setResult] = useState<ActionResult | null>(null);
+    const [confirmOpen, setConfirmOpen] = useState(false);
 
-    const run = (action: () => Promise<ActionResult>) => {
+    const run = (
+        action: () => Promise<ActionResult>,
+        onSuccess?: () => void
+    ) => {
         setResult(null);
         startTransition(async () => {
             const response = await action();
@@ -38,6 +43,7 @@ export function AdminMenuActions({
                 errorTitle: "Could not update menu item",
             });
             if (response.ok) {
+                onSuccess?.();
                 router.refresh();
             }
         });
@@ -51,7 +57,9 @@ export function AdminMenuActions({
                         type="button"
                         size="sm"
                         disabled={pending}
-                        onClick={() => run(() => setMenuItemStatus(itemId, "approved"))}
+                        onClick={() =>
+                            run(() => setMenuItemStatus(itemId, "approved"))
+                        }
                         className="bg-emerald-600 text-white hover:bg-emerald-700"
                     >
                         <Check aria-hidden="true" />
@@ -65,7 +73,9 @@ export function AdminMenuActions({
                         size="sm"
                         variant="destructive"
                         disabled={pending}
-                        onClick={() => run(() => setMenuItemStatus(itemId, "rejected"))}
+                        onClick={() =>
+                            run(() => setMenuItemStatus(itemId, "rejected"))
+                        }
                     >
                         <X aria-hidden="true" />
                         Reject
@@ -78,10 +88,27 @@ export function AdminMenuActions({
                         size="sm"
                         variant="outline"
                         disabled={pending}
-                        onClick={() => run(() => setMenuItemStatus(itemId, "pending"))}
+                        onClick={() =>
+                            run(() => setMenuItemStatus(itemId, "pending"))
+                        }
                     >
                         <Eye aria-hidden="true" />
                         Set pending
+                    </Button>
+                ) : null}
+
+                {status !== "inactive" ? (
+                    <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={pending}
+                        onClick={() =>
+                            run(() => setMenuItemStatus(itemId, "inactive"))
+                        }
+                    >
+                        <Eye aria-hidden="true" />
+                        Set inactive
                     </Button>
                 ) : null}
 
@@ -90,17 +117,7 @@ export function AdminMenuActions({
                     size="sm"
                     variant="destructive"
                     disabled={pending}
-                    onClick={() => {
-                        if (
-                            !window.confirm(
-                                `Delete "${itemName}"? This cannot be undone.`
-                            )
-                        ) {
-                            return;
-                        }
-
-                        run(() => adminDeleteMenuItem(itemId));
-                    }}
+                    onClick={() => setConfirmOpen(true)}
                 >
                     {pending ? (
                         <Loader2 className="animate-spin" aria-hidden="true" />
@@ -122,6 +139,21 @@ export function AdminMenuActions({
                     {result.message}
                 </p>
             ) : null}
+
+            <ConfirmDialog
+                open={confirmOpen}
+                onOpenChange={setConfirmOpen}
+                title="Delete this menu item?"
+                description={`"${itemName}" will be removed permanently. This cannot be undone.`}
+                confirmLabel="Delete item"
+                destructive
+                pending={pending}
+                onConfirm={() =>
+                    run(() => adminDeleteMenuItem(itemId), () =>
+                        setConfirmOpen(false)
+                    )
+                }
+            />
         </div>
     );
 }

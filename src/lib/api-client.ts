@@ -23,7 +23,10 @@ async function requestToken(force = false): Promise<string | null> {
 
     const load = (async () => {
         try {
-            const response = await fetch(`${API_URL}/api/auth/token`, {
+            // Same-origin proxy: the Better Auth cookie is SameSite=Lax, so it
+            // cannot be sent directly to the Express API origin. The proxy
+            // forwards it server-to-server and returns the JWT.
+            const response = await fetch("/api/token", {
                 method: "POST",
                 credentials: "include",
                 cache: "no-store",

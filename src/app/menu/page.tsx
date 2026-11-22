@@ -2,13 +2,14 @@ import type { Metadata } from "next";
 
 import BrowseMenu from "@/components/Menu/BrowseMenu";
 import { getPublicMenuItems } from "@/lib/data";
+import { MENU_CATEGORIES } from "@/lib/types/dashboard";
 
 export const instant = false;
 
 export const metadata: Metadata = {
     title: "Browse Menu",
     description:
-        "Explore approved dishes from trusted PizzaHub restaurants. Search by name, category or location.",
+        "Explore approved dishes from trusted PizzaHub restaurants. Search by name, category or location and sort by price.",
 };
 
 export default async function MenuPage() {
@@ -30,5 +31,15 @@ export default async function MenuPage() {
         },
     }));
 
-    return <BrowseMenu items={menuItems} />;
+    const locations = Array.from(
+        new Set(items.map((item) => item.location).filter(Boolean))
+    ).sort();
+
+    return (
+        <BrowseMenu
+            items={menuItems}
+            categories={[...MENU_CATEGORIES]}
+            locations={locations}
+        />
+    );
 }
