@@ -23,8 +23,8 @@ const DEMO_PASSWORD = "Demo@PizzaHub2026";
 const ACCOUNTS = [
     {
         name: "PizzaHub Admin",
-        email: "admin@pizzahub.dev",
-        password: "Admin@PizzaHub2026",
+        email: "hridoyhossain00r@gmail.com",
+        password: "AAss1234",
         role: "admin",
     },
     {

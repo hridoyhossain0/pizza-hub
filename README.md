@@ -24,7 +24,7 @@ monitor subscription transactions.
 
 | Role | Email | Password |
 | --- | --- | --- |
-| Administrator | `admin@pizzahub.dev` | `Admin@PizzaHub2026` |
+| Administrator | `hridoyhossain00r@gmail.com` | `AAss1234` |
 | Vendor (Free) | `vendor@pizzahub.dev` | `Demo@PizzaHub2026` |
 | Vendor (Premium) | `premium@pizzahub.dev` | `Demo@PizzaHub2026` |
 | Customer | `customer@pizzahub.dev` | `Demo@PizzaHub2026` |
