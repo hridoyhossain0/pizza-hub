@@ -8,11 +8,30 @@ monitor subscription transactions.
 
 - **Frontend:** Next.js App Router + ShadCN UI (this repository)
 - **Backend:** Express + MongoDB (`../pizza-hub-server`)
-- **Deployment:** Vercel frontend + separately hosted Express API
+- **Deployment:** Vercel frontend + Vercel serverless Express API
 
-Set the live URLs after deployment. The frontend and API are separate services;
-the Express API must remain available for auth-token exchange, orders, Stripe
-and image uploads.
+## Live links
+
+| | URL |
+| --- | --- |
+| Frontend | <https://pizza-hub-rho-one.vercel.app> |
+| API | <https://pizza-hub-server-zeta.vercel.app> |
+| API health | <https://pizza-hub-server-zeta.vercel.app/health> |
+| Client repo | <https://github.com/hridoyhossain0/pizza-hub> |
+| Server repo | <https://github.com/hridoyhossain0/pizza-hub-server> |
+
+## Demo accounts
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Administrator | `admin@pizzahub.dev` | `Admin@PizzaHub2026` |
+| Vendor (Free) | `vendor@pizzahub.dev` | `Demo@PizzaHub2026` |
+| Vendor (Premium) | `premium@pizzahub.dev` | `Demo@PizzaHub2026` |
+| Customer | `customer@pizzahub.dev` | `Demo@PizzaHub2026` |
+
+These accounts are created by `npm run seed-demo` and share the same MongoDB
+database in every environment. Administrator accounts cannot be created from the
+public sign-up form.
 
 ## Features
 
@@ -153,20 +172,28 @@ changes the plan.
 
 ### Challenge 1 — advanced search and price sorting
 
-Browse Menu (`src/components/Menu/BrowseMenu.tsx`) starts from the approved,
-active menu items supplied by the server page and applies a memoized pipeline:
+Search is implemented twice from one shared query shape so the page and the API
+always agree:
 
-1. **Search** checks the lower-cased query against item name, category, location
-   and vendor name, so a pizza, a city or a restaurant name all match.
-2. **Filters** narrow by exact category and location from selects populated from
-   the loaded data set.
-3. **Sorting** supports `Newest` (default), `Price: Low to High`,
-   `Price: High to Low` and `Name: A to Z`. The sort value is part of component
-   state, and "Clear filters" resets filters **and** sort order.
+- **API:** `GET /api/menu?q=&category=&location=&sort=&page=&limit=`
+  (`pizza-hub-server/menu.ts`). `q` is matched case-insensitively against item
+  name, description, category, location and restaurant name using an escaped
+  regular expression. `sort` accepts `price_asc`, `price_desc` or `newest`
+  (Premium items are featured first as the tie-breaker), and the response
+  includes pagination plus category/location facets.
+- **Page:** `/menu` reads `q`, `category`, `location` and `sort` from the URL on
+  the first render, then `src/components/Menu/BrowseMenu.tsx` keeps every filter
+  in the query string. A short debounce updates the URL with `router.replace`,
+  so a filtered view is shareable, survives reload and works with back/forward.
+- Search covers name, category, location and restaurant name; category and
+  location filters are exact; sorting supports newest, price low → high, price
+  high → low and name A → Z.
+- Loading skeletons, a live result count and a dedicated empty state with
+  "Clear filters" cover the non-happy paths.
 
-The result count updates live, and the empty state explains how to broaden the
-search. All data is loaded once, so filtering and sorting are instant and do not
-trigger extra network round-trips.
+All six required categories are stored verbatim on `menuItems.category:
+Classic Pizzas, Vegetarian Pizzas, Meat Lovers, Specialty / Gourmet Pizzas,
+Sides & Appetizers, Beverages & Desserts`.
 
 ### Challenge 2 — JWT verification middleware (Express)
 
@@ -178,9 +205,11 @@ remains the source of truth for identity:
    `auth.api.getSession`, rejects missing/blocked accounts, and signs an HS256
    JWT (`sub` = user id, plus name/email/role) with `JWT_SECRET`, issuer
    `pizza-hub-server`, audience `pizza-hub-client` and `JWT_TTL_SECONDS`.
-3. `src/lib/api-client.ts` caches the token in memory, sends it as
-   `Authorization: Bearer <token>`, and retries once after a forced refresh if
-   the API answers `401`.
+3. The browser calls the same-origin `POST /api/token` route, which forwards the
+   Better Auth cookie server-to-server (the cookie is `SameSite=Lax`, so it
+   cannot be sent to the API origin directly). `src/lib/api-client.ts` caches the
+   returned JWT in memory, sends it as `Authorization: Bearer <token>`, and
+   retries once after a forced refresh if the API answers `401`.
 4. `requireAuth` (`pizza-hub-server/jwt.ts`) verifies the signature, algorithm,
    expiry, issuer and audience, then re-reads the user from MongoDB. A deleted or
    blocked account is rejected and the **role always comes from the database**,
@@ -211,12 +240,15 @@ events that the current order model does not record.
 
 | Method | Route | Access |
 | --- | --- | --- |
+| `GET` | `/api/menu` | public (advanced search + sort) |
+| `GET` | `/health` | public |
 | `POST` | `/api/auth/token` | Better Auth session cookie |
 | `GET` | `/api/orders` | JWT (own orders) |
 | `POST` | `/api/orders` | JWT + Customer role |
 | `POST` | `/api/payments/checkout` | JWT + Vendor role |
+| `POST` | `/api/payments/cancel` | JWT + Vendor role |
 | `POST` | `/api/payments/webhook` | Stripe signature |
-| `POST` | `/api/uploads` | Session upload guard |
+| `POST` | `/api/uploads` | Better Auth session |
 
 ## UX states and error handling
 
@@ -251,31 +283,36 @@ sample data; never include personal information or provider secrets.
    Vercel deployments, then use the same `MONGODB_URL` for both services.
 2. Deploy this Next.js app to Vercel. Set its environment variables from the
    frontend list above, with `NEXT_PUBLIC_API_URL` set to the deployed Express
-   origin.
-3. Deploy `pizza-hub-server` to a Node-compatible host. Set its backend
-   variables, `APP_URL` to the Vercel origin, and `PUBLIC_API_URL` to the API
-   origin. Configure the host to run `npm start` and bind to `PORT`.
+   origin and `BETTER_AUTH_URL` set to the deployed frontend origin.
+3. Deploy `pizza-hub-server` to Vercel as serverless functions. The Express app
+   is exported from `api/[...route].ts` (via `app.ts`) and `vercel.json` rewrites
+   every `/api/*` path to it; `local-server.ts` is used only for local
+   development. Set `APP_URL` and `BETTER_AUTH_URL` to the Vercel frontend
+   origin, and `PUBLIC_API_URL` to the API origin.
 4. In Google Cloud OAuth, add the production Better Auth callback URL
-   `https://<frontend-domain>/api/auth/callback/google` as an authorized redirect
-   URI, and allow the deployed frontend origin.
+   `https://pizza-hub-rho-one.vercel.app/api/auth/callback/google` as an
+   authorized redirect URI, and allow the deployed frontend origin.
 5. In Stripe, register
-   `https://<api-domain>/api/payments/webhook` for checkout completion events
-   handled by the API, then set the issued signing secret as
-   `STRIPE_WEBHOOK_SECRET`.
-6. Confirm the API `/health` endpoint responds, sign in with Google and email,
-   reload public and dashboard routes, verify browser CORS, and complete a Stripe
-   test-mode upgrade before enabling live keys.
+   `https://pizza-hub-server-zeta.vercel.app/api/payments/webhook` for the
+   checkout and subscription events handled by the API, then set the issued
+   signing secret as `STRIPE_WEBHOOK_SECRET`.
+6. Confirm `/health` responds, sign in with Google and email, reload public and
+   dashboard routes, verify browser CORS, and complete a Stripe test-mode
+   upgrade before enabling live keys.
 
-Set concrete URLs only after both services and provider callback URLs are known.
 Never put server-only secrets in `NEXT_PUBLIC_*` variables.
 
 ## Scripts
 
 ```bash
-npm run dev     # start the Next.js dev server
-npm run build   # production build
-npm run start   # serve the production build
-npm run lint    # ESLint
+npm run dev            # start the Next.js dev server
+npm run build          # production build
+npm run start          # serve the production build
+npm run lint           # ESLint
+npm run seed-demo      # create demo accounts, restaurants, menu and orders
+npm run migrate-schema # migrate legacy field names to the assignment schema
+npm run set-role -- user@example.com vendor   # change a role directly
+npm run set-admin -- user@example.com Password123  # provision an administrator
 ```
 
 ## Notes
