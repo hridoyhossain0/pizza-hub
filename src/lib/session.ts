@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth";
+import { ensureMongoConnection } from "@/lib/db";
 import { normalizeUserRole, ROLE_HOME, type UserRole } from "@/lib/roles";
 
 export interface SessionUser {
@@ -21,6 +22,7 @@ export interface SessionUser {
  * and page guards share a single lookup.
  */
 export const getSession = cache(async () => {
+    await ensureMongoConnection();
     return auth.api.getSession({ headers: await headers() });
 });
 

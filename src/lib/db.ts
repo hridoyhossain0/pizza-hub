@@ -132,6 +132,32 @@ if (process.env.NODE_ENV !== "production") {
 /** Same default database Better Auth's adapter uses (no name in the URI). */
 export const db = mongoClient.db();
 
+/**
+ * True while the driver has an open topology. `connect()` recreates the
+ * topology, so it must only run when the previous one is missing or closed.
+ */
+function isMongoConnected() {
+    const topology = (
+        mongoClient as unknown as {
+            topology?: { isConnected?: () => boolean };
+        }
+    ).topology;
+
+    return topology?.isConnected?.() === true;
+}
+
+/**
+ * Opens the connection on a cold start and reopens it if a transient Vercel
+ * network failure closed the topology. Without this, a single failed cold
+ * start poisons the warm serverless instance and every later request returns
+ * `MongoTopologyClosedError` until the next deployment.
+ */
+export async function ensureMongoConnection() {
+    if (!isMongoConnected()) {
+        await mongoClient.connect();
+    }
+}
+
 export const usersCollection: Collection<UserDocument> =
     db.collection("user");
 export const sessionsCollection = db.collection("session");
