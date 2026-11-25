@@ -36,8 +36,8 @@ const channels = [
     {
         icon: Phone,
         title: "Call support",
-        value: "+880 1700-000000",
-        href: "tel:+8801700000000",
+        value: "+880 1614-661970",
+        href: "tel:+8801614661970",
         description: "Available every day from 10 AM to 11 PM.",
     },
     {
@@ -198,7 +198,7 @@ export default function ContactPage() {
                                 className="mt-5 inline-flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-3 text-sm font-bold text-white transition hover:bg-orange-600"
                             >
                                 <Phone size={17} aria-hidden="true" />
-                                +880 1700-000000
+                                +880 1614-661970
                             </a>
 
                             <div className="mt-6 space-y-3 border-t border-white/10 pt-5 text-sm text-gray-400">

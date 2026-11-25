@@ -78,22 +78,21 @@ const steps = [
 
 const team = [
     {
-        name: "Ayesha Rahman",
+        name: "Jhankar Mahbub",
         role: "Co-founder & Product",
         image:
-            "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=800&auto=format&fit=crop",
+            "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSahho_s9jqE6gFgUDeSdw30HC3cNrCImgnDd0YLIxsZQ&s=10",
     },
     {
-        name: "Tanvir Hasan",
+        name: "Md Hridoy Hossain",
         role: "Co-founder & Partnerships",
-        image:
-            "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=800&auto=format&fit=crop",
+        image: "/photo.png",
     },
     {
-        name: "Mim Akter",
+        name: "Ahashan Habib Utsho",
         role: "Head of Customer Experience",
         image:
-            "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=800&auto=format&fit=crop",
+            "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSfis-5j3dTXtAlIDADTaW7pn5oovRB4RpVcdI7FuvoEw&s",
     },
 ];
 
@@ -386,7 +385,7 @@ export default function AboutPage() {
                             >
                                 <div className="relative h-64 overflow-hidden bg-gray-100 dark:bg-neutral-800">
                                     <Image
-                                        src={member.image}
+                                        src={member.image || "/photo.png"}
                                         alt={member.name}
                                         fill
                                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"

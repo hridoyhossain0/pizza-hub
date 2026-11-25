@@ -4,7 +4,7 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { apiFetch } from "@/lib/api-client";
+import { placeOrder } from "@/lib/actions/orders";
 import {
     ArrowLeft,
     ArrowRight,
@@ -23,6 +23,7 @@ import {
     MessageSquare,
     Send,
 } from "lucide-react";
+import Image from "next/image";
 
 export interface MenuDetails {
     _id: string;
@@ -133,28 +134,22 @@ export default function ItemDetails({
         try {
             setOrdering(true);
 
-            const { response, data } = await apiFetch<{ message?: string }>(
-                "/api/orders",
-                {
-                    method: "POST",
-                    body: JSON.stringify({
-                        itemId: item._id,
-                        quantity,
-                        deliveryDate,
-                        deliveryAddress: deliveryAddress.trim(),
-                        message: specialInstructions.trim(),
-                    }),
-                }
-            );
+            const result = await placeOrder({
+                itemId: item._id,
+                quantity,
+                deliveryDate,
+                deliveryAddress: deliveryAddress.trim(),
+                message: specialInstructions.trim(),
+            });
 
-            if (!response.ok) {
+            if (!result.ok) {
                 throw new Error(
-                    data?.message || "Unable to place your order."
+                    result.message || "Unable to place your order."
                 );
             }
 
             const successMessage =
-                data?.message || "Your order has been placed successfully!";
+                result.message || "Your order has been placed successfully!";
 
             setMessage(successMessage);
             toast.success("Order placed", {
@@ -200,10 +195,14 @@ export default function ItemDetails({
                         <div className="overflow-hidden rounded-3xl border border-gray-100 bg-white dark:border-white/10 dark:bg-neutral-900 p-2 shadow-sm">
 
                             <div className="relative h-[280px] overflow-hidden rounded-2xl bg-gray-100 dark:bg-neutral-800 sm:h-[420px] lg:h-[490px]">
-                                <img
+                                <Image
                                     src={item.images[selectedImage] || "/placeholder-pizza.svg"}
                                     alt={item.name}
-                                    className="h-full w-full object-cover"
+                                    fill
+                                    preload
+                                    unoptimized
+                                    sizes="(max-width: 1024px) 100vw, 640px"
+                                    className="object-cover"
                                 />
 
                                 <span className="absolute left-5 top-5 rounded-full bg-white px-4 py-2 text-sm font-bold text-orange-600 shadow dark:bg-neutral-950 dark:text-orange-400">
@@ -230,15 +229,18 @@ export default function ItemDetails({
                                             key={`${image}-${index}`}
                                             type="button"
                                             onClick={() => setSelectedImage(index)}
-                                            className={`h-20 w-24 shrink-0 overflow-hidden rounded-xl border-2 transition sm:h-24 sm:w-28 ${selectedImage === index
+                                            className={`relative h-20 w-24 shrink-0 overflow-hidden rounded-xl border-2 transition sm:h-24 sm:w-28 ${selectedImage === index
                                                     ? "border-orange-500"
                                                     : "border-transparent opacity-70 hover:opacity-100"
                                                 }`}
                                         >
-                                            <img
+                                            <Image
                                                 src={image}
                                                 alt={`${item.name} image ${index + 1}`}
-                                                className="h-full w-full object-cover"
+                                                fill
+                                                unoptimized
+                                                sizes="112px"
+                                                className="object-cover"
                                             />
                                         </button>
                                     ))}
@@ -302,9 +304,12 @@ export default function ItemDetails({
 
                                 <div className="flex items-center gap-4">
                                     {item.vendor.image ? (
-                                        <img
+                                        <Image
                                             src={item.vendor.image}
                                             alt={item.vendor.name}
+                                            width={56}
+                                            height={56}
+                                            unoptimized
                                             className="h-14 w-14 rounded-2xl object-cover"
                                         />
                                     ) : (

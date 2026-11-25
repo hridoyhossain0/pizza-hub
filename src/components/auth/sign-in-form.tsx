@@ -324,7 +324,7 @@ export default function SignInForm({
                         type="button"
                         onClick={handleGoogle}
                         disabled={busy}
-                        className="flex w-full items-center justify-center gap-3 rounded-xl border py-3 text-sm font-bold transition hover:border-orange-300 hover:bg-orange-50 disabled:opacity-60"
+                        className="flex w-full items-center justify-center gap-3 rounded-xl border py-3 text-sm font-bold transition hover:border-orange-300 hover:bg-orange-200 hover:text-black disabled:opacity-60"
                     >
                         {googleLoading ? (
                             <Loader2 className="size-4 animate-spin" />

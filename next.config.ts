@@ -35,7 +35,13 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'i.ibb.co',
+        hostname: '**',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        
+        hostname: '**',
         port: '',
         pathname: '/**',
       },
